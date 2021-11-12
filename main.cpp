@@ -11,6 +11,7 @@
 
 namespace fs = std::filesystem;
 
+
 #define MAX 10
 #define DEFAULT_STD_DEV "2.5"
 #define DEFAULT_SAMPLE_RADIUS "0"
@@ -21,6 +22,48 @@ namespace fs = std::filesystem;
 #define DEFAULT_VERBOSE "false"
 #endif
 
+// Point class (x, y)
+class Point2 {
+public:
+	double x;
+	double y;
+	Point2(double x, double y) : x(x), y(y) {}
+};
+
+
+bool extractPolygon(const std::string& boundary, std::vector<Point2>& points)
+{
+	std::ifstream i(boundary);
+	nlohmann::json j;
+	i >> j;
+
+	const auto features = j["features"];
+
+	if (features.empty())
+	{
+		return false;
+	}
+
+	for(const auto &f : features)
+	{
+		const auto geometry = f["geometry"];
+
+		if (geometry["type"] != "Polygon")		
+			continue;
+
+		const auto coordinates = geometry["coordinates"][0];
+
+		// Add the points
+		for (auto& coord : coordinates) 
+			points.emplace_back(coord[0], coord[1]);
+		
+
+		return true;
+	}
+
+	return false;
+	
+}
 
 int main(const int argc, char** argv)
 {
@@ -34,6 +77,7 @@ int main(const int argc, char** argv)
 		//("d,debug", "Enable debugging") // a bool parameter
 		("i,input", "Input point cloud", cxxopts::value<std::string>())
 		("o,output", "Output point cloud", cxxopts::value<std::string>())
+		("b,boundary", "Process boundary (GeoJSON POLYGON)", cxxopts::value<std::string>()->default_value(""))
 		("s,std", "Standard deviation", cxxopts::value<double>()->default_value(DEFAULT_STD_DEV))
 		("r,radius", "Sample radius", cxxopts::value<double>()->default_value(DEFAULT_SAMPLE_RADIUS))
 		("c,concurrency", "Max concurrency", cxxopts::value<int>()->default_value("0"))
@@ -107,6 +151,28 @@ int main(const int argc, char** argv)
 		const auto verbose = result["verbose"].as<bool>();
 
 		std::cout << "\tverbose = " << (verbose ? "yes" : "no") << std::endl;
+
+		const auto boundary = result["boundary"].as<std::string>();
+
+		std::vector<Point2> boundaryPolygon;
+
+		if (!boundary.empty())
+		{
+			std::cout << "\tboundary = " << boundary << std::endl;
+
+			if (!extractPolygon(boundary, boundaryPolygon))
+			{
+				std::cout << "!> Boundary file does not contain a valid POLYGON" << std::endl;
+				return 0;
+			}
+
+			std::cout << " ?> Extracted " << boundaryPolygon.size() << " boundary points" << std::endl;
+
+		}
+		else
+		{
+			std::cout << "\tboundary = auto" << std::endl;
+		}
 		
 		//octree::Octree<Point3f> octree;
 		//octree::OctreeParams params;
