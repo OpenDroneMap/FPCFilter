@@ -30,6 +30,31 @@ public:
 	Point2(double x, double y) : x(x), y(y) {}
 };
 
+bool inside(const Point2& point, const std::vector<Point2>& vs) {
+	// ray-casting algorithm based on
+	// https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html/pnpoly.html
+
+	const auto y = point.y;
+
+	auto inside = false;
+
+	size_t i;
+	size_t j;
+
+	for (i = 0, j = vs.size() - 1; i < vs.size(); j = i++) {
+		const auto  xi = vs[i].x, yi = vs[i].y;
+		const auto  xj = vs[j].x, yj = vs[j].y;
+
+		const auto intersect = ((yi > y) != (yj > y))
+			&& (point.x < (xj - xi)* (y - yi) / (yj - yi) + xi);
+
+		if (intersect)
+			inside = !inside;
+	}
+
+	return inside;
+};
+
 
 bool extractPolygon(const std::string& boundary, std::vector<Point2>& points)
 {
@@ -44,25 +69,25 @@ bool extractPolygon(const std::string& boundary, std::vector<Point2>& points)
 		return false;
 	}
 
-	for(const auto &f : features)
+	for (const auto& f : features)
 	{
 		const auto geometry = f["geometry"];
 
-		if (geometry["type"] != "Polygon")		
+		if (geometry["type"] != "Polygon")
 			continue;
 
 		const auto coordinates = geometry["coordinates"][0];
 
 		// Add the points
-		for (auto& coord : coordinates) 
+		for (auto& coord : coordinates)
 			points.emplace_back(coord[0], coord[1]);
-		
+
 
 		return true;
 	}
 
 	return false;
-	
+
 }
 
 int main(const int argc, char** argv)
@@ -111,7 +136,7 @@ int main(const int argc, char** argv)
 
 		// Delete existing output file
 		if (fs::exists(outputFile)) fs::remove(outputFile);
-		
+
 		std::cout << "\toutput = " << outputFile << std::endl;
 
 		const auto std = result["std"].as<double>();
@@ -173,7 +198,14 @@ int main(const int argc, char** argv)
 		{
 			std::cout << "\tboundary = auto" << std::endl;
 		}
-		
+
+		/*
+		 * Exclude out of boundary points
+		 * Sample point cloud
+		 * 
+		 *
+		 */
+
 		//octree::Octree<Point3f> octree;
 		//octree::OctreeParams params;
 
