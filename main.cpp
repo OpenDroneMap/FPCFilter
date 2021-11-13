@@ -1,236 +1,88 @@
-// Your First C++ Program
 
 #include <iostream>
 #include <filesystem>
 #include <omp.h>
+#include "common.h"
 #include "FPCFilter.h"
+#include "parameters.h"
 #include "vendor/octree.hpp"
 #include "vendor/happly.hpp"
-#include "vendor/json.hpp"
-#include "vendor/cxxopts.hpp"
 
 namespace fs = std::filesystem;
 
-
-#define MAX 10
-#define DEFAULT_STD_DEV "2.5"
-#define DEFAULT_SAMPLE_RADIUS "0"
-
-#ifdef DEBUG
-#define DEFAULT_VERBOSE "true"
-#else
-#define DEFAULT_VERBOSE "false"
-#endif
-
-// Point class (x, y)
-class Point2 {
-public:
-	double x;
-	double y;
-	Point2(double x, double y) : x(x), y(y) {}
-};
-
-bool inside(const Point2& point, const std::vector<Point2>& vs) {
-	// ray-casting algorithm based on
-	// https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html/pnpoly.html
-
-	const auto y = point.y;
-
-	auto inside = false;
-
-	size_t i;
-	size_t j;
-
-	for (i = 0, j = vs.size() - 1; i < vs.size(); j = i++) {
-		const auto  xi = vs[i].x, yi = vs[i].y;
-		const auto  xj = vs[j].x, yj = vs[j].y;
-
-		const auto intersect = ((yi > y) != (yj > y))
-			&& (point.x < (xj - xi)* (y - yi) / (yj - yi) + xi);
-
-		if (intersect)
-			inside = !inside;
-	}
-
-	return inside;
-};
-
-
-bool extractPolygon(const std::string& boundary, std::vector<Point2>& points)
-{
-	std::ifstream i(boundary);
-	nlohmann::json j;
-	i >> j;
-
-	const auto features = j["features"];
-
-	if (features.empty())
-	{
-		return false;
-	}
-
-	for (const auto& f : features)
-	{
-		const auto geometry = f["geometry"];
-
-		if (geometry["type"] != "Polygon")
-			continue;
-
-		const auto coordinates = geometry["coordinates"][0];
-
-		// Add the points
-		for (auto& coord : coordinates)
-			points.emplace_back(coord[0], coord[1]);
-
-
-		return true;
-	}
-
-	return false;
-
-}
-
 int main(const int argc, char** argv)
 {
-	std::cout << " *** FPCFilter - v" << FPCFilter_VERSION_MAJOR << "." << FPCFilter_VERSION_MINOR << " ***" << std::endl;
+	std::cout << " *** FPCFilter - v" << FPCFilter_VERSION_MAJOR << "." << FPCFilter_VERSION_MINOR << " ***" << std::endl << std::endl;
 
-	cxxopts::Options options("FPCFilter", "Fast Point Cloud Filtering");
-
-	options.show_positional_help();
-
-	options.add_options()
-		//("d,debug", "Enable debugging") // a bool parameter
-		("i,input", "Input point cloud", cxxopts::value<std::string>())
-		("o,output", "Output point cloud", cxxopts::value<std::string>())
-		("b,boundary", "Process boundary (GeoJSON POLYGON)", cxxopts::value<std::string>()->default_value(""))
-		("s,std", "Standard deviation", cxxopts::value<double>()->default_value(DEFAULT_STD_DEV))
-		("r,radius", "Sample radius", cxxopts::value<double>()->default_value(DEFAULT_SAMPLE_RADIUS))
-		("c,concurrency", "Max concurrency", cxxopts::value<int>()->default_value("0"))
-		("v,verbose", "Verbose output", cxxopts::value<bool>()->default_value(DEFAULT_VERBOSE));
-
-	options.parse_positional({ "input", "output" });
 
 	try {
 
-		const auto result = options.parse(argc, argv);
+		FPCFilter::Parameters parameters(argc, argv);
 
-		if (!result.count("input") || !result.count("output"))
-		{
-			std::cout << options.help() << std::endl;
-			return 0;
-		}
-
-		std::cout << std::endl << "?> Parameters:" << std::endl;
-
-		const auto inputFile = result["input"].as<std::string>();
-
-		if (!fs::exists(inputFile))
-		{
-			std::cout << "!> Input file '" << inputFile << "' does not exist" << std::endl;
-			return 0;
-		}
-
-		std::cout << "\tinput = " << inputFile << std::endl;
-
-		const auto outputFile = result["output"].as<std::string>();
-
-		// Delete existing output file
-		if (fs::exists(outputFile)) fs::remove(outputFile);
-
-		std::cout << "\toutput = " << outputFile << std::endl;
-
-		const auto std = result["std"].as<double>();
-
-		if (std < 0)
-		{
-			std::cout << "!> Standard deviation cannot be less than 0" << std::endl;
-			return 0;
-		}
-
-		std::cout << "\tstd = " << std::setprecision(4) << std << std::endl;
-
-		const auto radius = result["radius"].as<double>();
-
-		if (radius < 0)
-		{
-			std::cout << "!> Radius cannot be less than 0" << std::endl;
-			return 0;
-		}
-
-		std::cout << "\tradius = " << std::setprecision(4) << radius << std::endl;
-
-		auto concurrency = result["concurrency"].as<int>();
-
-		if (concurrency == 0)
-		{
-			concurrency = std::max(omp_get_num_procs(), 1);
-		}
-		else if (concurrency < 0)
-		{
-			std::cout << "!> Concurrency cannot be less than 0" << std::endl;
-			return 0;
-		}
-
-		std::cout << "\tconcurrency = " << concurrency << std::endl;
-
-		const auto verbose = result["verbose"].as<bool>();
-
-		std::cout << "\tverbose = " << (verbose ? "yes" : "no") << std::endl;
-
-		const auto boundary = result["boundary"].as<std::string>();
-
-		std::vector<Point2> boundaryPolygon;
-
-		if (!boundary.empty())
-		{
-			std::cout << "\tboundary = " << boundary << std::endl;
-
-			if (!extractPolygon(boundary, boundaryPolygon))
-			{
-				std::cout << "!> Boundary file does not contain a valid POLYGON" << std::endl;
-				return 0;
-			}
-
-			std::cout << " ?> Extracted " << boundaryPolygon.size() << " boundary points" << std::endl;
-
-		}
-		else
-		{
+        std::cout << "?> Parameters:" << std::endl;
+        std::cout << "\tinput = " << parameters.input << std::endl;
+        std::cout << "\toutput = " << parameters.output << std::endl;
+        std::cout << "\tstd = " << std::setprecision(4) << parameters.std << std::endl;
+        std::cout << "\tradius = " << std::setprecision(4) << parameters.radius << std::endl;
+        
+		if (parameters.boundary.has_value()) 
+			std::cout << "\tboundary = " << parameters.boundary.value().getPoints().size() << " polygon vertexes" << std::endl;		
+		else 
 			std::cout << "\tboundary = auto" << std::endl;
-		}
+		
+        std::cout << "\tconcurrency = " << parameters.concurrency << std::endl;
+        std::cout << "\tverbose = " << (parameters.verbose ? "yes" : "no") << std::endl;
+		std::cout << std::endl;
+
+        // Delete existing output file
+        if (fs::exists(parameters.output)) fs::remove(parameters.output);
 
 		/*
-		 * Exclude out of boundary points
-		 * Sample point cloud
-		 * 
-		 *
+		 * -> Workflow:
+		 * 0) Load input
+		 * 1) Crop out of boundary points
+		 * 2) Sample point cloud (reduce density using 'radius' parameter)
+		 * 3) Filter out outliers using statistical filter
+		 * 4) Write output
 		 */
 
 		//octree::Octree<Point3f> octree;
 		//octree::OctreeParams params;
 
 		// Construct a data object by reading from file
-		happly::PLYData plyIn(inputFile);
+		happly::PLYData plyIn(parameters.input);
 
 		const auto elements = plyIn.getElementNames();
 
+		std::cout << " ?> Mesh contents: " << std::endl << std::endl;
+
 		for (const auto& element : elements) {
-			std::cout << element << std::endl;
+			std::cout << '\t' << element << std::endl;
 
 			const auto properties = plyIn.getElement(element).getPropertyNames();
 
 			for (const auto& prop : properties) {
-				std::cout << '\t' << prop << std::endl;
+				std::cout << "\t\t" << prop << std::endl;
 			}
 		}
 
-		plyIn.write(outputFile, happly::DataFormat::Binary);
+		std::cout << std::endl;
+
+		const std::vector<std::array<double, 3>> vertexes = plyIn.getVertexPositions();
+
+		std::cout << " ?> Found " << vertexes.size() << " vertexes" << std::endl;
+
+		plyIn.write(parameters.output, happly::DataFormat::Binary);
 
 	}
-	catch (const std::runtime_error& e) {
+	catch(const std::invalid_argument& e) {
 		std::cerr << e.what() << std::endl;
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
-
-	return 0;
+	catch(const std::exception& e) {
+		std::cerr << "Error: " << e.what() << std::endl;
+		return EXIT_FAILURE;
+	}
+	
+	return EXIT_SUCCESS;
 }
