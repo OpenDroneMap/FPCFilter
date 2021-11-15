@@ -6,9 +6,9 @@ namespace FPCFilter {
     // Point class (x, y)
     class Point2 {
     public:
-        double x;
-        double y;
-        Point2(double x, double y) : x(x), y(y) {}
+        float x;
+        float y;
+        Point2(float x, float y) : x(x), y(y) {}
     };
 
     class Polygon {
@@ -21,7 +21,7 @@ namespace FPCFilter {
 
         Polygon() {}
         Polygon(std::vector<Point2> points) : points(points) {}
-        Polygon(std::vector<double> x, std::vector<double> y) {
+        Polygon(std::vector<float> x, std::vector<float> y) {
             for (int i = 0; i < x.size(); i++) {
                 this->points.push_back(Point2(x[i], y[i]));
             }
@@ -35,15 +35,13 @@ namespace FPCFilter {
             this->points.push_back(point);
         }
 
-        void addPoint(double x, double y) {
+        void addPoint(float x, float y) {
             this->points.push_back(Point2(x, y));
         }
 
-        bool inside(const Point2& point) {
+        bool inside(float x, float y) const {
             // ray-casting algorithm based on
             // https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html/pnpoly.html
-
-            const auto y = point.y;
 
             auto inside = false;
 
@@ -55,13 +53,17 @@ namespace FPCFilter {
                 const auto  xj = points[j].x, yj = points[j].y;
 
                 const auto intersect = ((yi > y) != (yj > y))
-                    && (point.x < (xj - xi)* (y - yi) / (yj - yi) + xi);
+                    && (x < (xj - xi)* (y - yi) / (yj - yi) + xi);
 
                 if (intersect)
                     inside = !inside;
             }
 
             return inside;
+        };
+
+        bool inside(const Point2& point) const {            
+            return inside(point.x, point.y);
         };
 
 

@@ -2,18 +2,17 @@
 #include <iostream>
 #include <filesystem>
 #include <omp.h>
-#include "common.h"
+#include "common.hpp"
 #include "FPCFilter.h"
-#include "parameters.h"
-#include "vendor/octree.hpp"
-#include "vendor/happly.hpp"
+#include "pipeline.hpp"
+#include "parameters.hpp"
+#include "vendor/loguru/loguru.hpp"
 
 namespace fs = std::filesystem;
 
 int main(const int argc, char** argv)
 {
 	std::cout << " *** FPCFilter - v" << FPCFilter_VERSION_MAJOR << "." << FPCFilter_VERSION_MINOR << " ***" << std::endl << std::endl;
-
 
 	try {
 
@@ -23,8 +22,9 @@ int main(const int argc, char** argv)
         std::cout << "\tinput = " << parameters.input << std::endl;
         std::cout << "\toutput = " << parameters.output << std::endl;
         std::cout << "\tstd = " << std::setprecision(4) << parameters.std << std::endl;
-        std::cout << "\tradius = " << std::setprecision(4) << parameters.radius << std::endl;
-        
+		std::cout << "\tradius = " << std::setprecision(4) << parameters.radius << std::endl;
+		std::cout << "\tmeanK = " << parameters.meank << std::endl;
+
 		if (parameters.boundary.has_value()) 
 			std::cout << "\tboundary = " << parameters.boundary.value().getPoints().size() << " polygon vertexes" << std::endl;		
 		else 
@@ -34,45 +34,71 @@ int main(const int argc, char** argv)
         std::cout << "\tverbose = " << (parameters.verbose ? "yes" : "no") << std::endl;
 		std::cout << std::endl;
 
-        // Delete existing output file
-        if (fs::exists(parameters.output)) fs::remove(parameters.output);
+		loguru::g_preamble_file = false;
+		loguru::g_preamble_uptime = false;
 
-		/*
-		 * -> Workflow:
-		 * 0) Load input
-		 * 1) Crop out of boundary points
-		 * 2) Sample point cloud (reduce density using 'radius' parameter)
-		 * 3) Filter out outliers using statistical filter
-		 * 4) Write output
-		 */
+		if (parameters.verbose) {
+			loguru::g_stderr_verbosity = loguru::Verbosity_MAX;
+			loguru::g_colorlogtostderr = true;
+			loguru::add_file("debug.log", loguru::Append, loguru::Verbosity_MAX);
+		} else		
+			loguru::add_file("debug.log", loguru::Append, loguru::Verbosity_INFO);
 
-		//octree::Octree<Point3f> octree;
-		//octree::OctreeParams params;
+		std::cout << " -> Loading point cloud ";
 
-		// Construct a data object by reading from file
-		happly::PLYData plyIn(parameters.input);
+		FPCFilter::Pipeline pipeline(parameters.input);
 
-		const auto elements = plyIn.getElementNames();
+		std::cout << "OK" << std::endl;
 
-		std::cout << " ?> Mesh contents: " << std::endl << std::endl;
+		if (parameters.isCropRequested)
+		{
 
-		for (const auto& element : elements) {
-			std::cout << '\t' << element << std::endl;
+			std::cout << std::endl << " -> Cropping ";
 
-			const auto properties = plyIn.getElement(element).getPropertyNames();
+			pipeline.crop(parameters.boundary.value());
 
-			for (const auto& prop : properties) {
-				std::cout << "\t\t" << prop << std::endl;
-			}
+			std::cout << "OK" << std::endl;
+
+		} else
+		{
+			std::cout << std::endl << " -> Skipping crop" << std::endl;
 		}
 
-		std::cout << std::endl;
+		if (parameters.isSampleRequested)
+		{
 
-		const std::vector<std::array<double, 3>> vertexes = plyIn.getVertexPositions();
+			std::cout << std::endl << " -> Sampling ";
 
-		std::cout << " ?> Found " << vertexes.size() << " vertexes" << std::endl;
+			pipeline.sample(parameters.radius);
 
-		plyIn.write(parameters.output, happly::DataFormat::Binary);
+			std::cout << "OK" << std::endl;
+
+		}
+		else
+		{
+			std::cout << std::endl << " -> Skipping sampling" << std::endl;
+		}
+		
+		if (parameters.isFilterRequested)
+		{
+
+			std::cout << std::endl << " -> Statistical filtering ";
+
+			pipeline.filter(parameters.std, parameters.meank);
+
+			std::cout << "OK" << std::endl;
+
+		}
+		else
+		{
+			std::cout << std::endl << " -> Skipping statistical filtering" << std::endl;
+		}
+
+		std::cout << std::endl << " -> Writing output ";
+
+		pipeline.write(parameters.output);
+
+		std::cout << "OK" << std::endl;
 
 	}
 	catch(const std::invalid_argument& e) {

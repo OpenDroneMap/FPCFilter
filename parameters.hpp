@@ -3,19 +3,14 @@
 #include <fstream>
 #include <filesystem>
 #include <omp.h>
-#include "common.h"
+#include "common.hpp"
 #include "vendor/cxxopts.hpp"
-#include "utils.h"
+#include "utils.hpp"
 #include "vendor/json.hpp"
 
 #define DEFAULT_STD_DEV "2.5"
+#define DEFAULT_MEANK "16"
 #define DEFAULT_SAMPLE_RADIUS "0"
-
-#ifdef DEBUG
-#define DEFAULT_VERBOSE "true"
-#else
-#define DEFAULT_VERBOSE "false"
-#endif
 
 namespace fs = std::filesystem;
 
@@ -67,6 +62,10 @@ namespace FPCFilter
 		double radius;
 		int concurrency;
 		bool verbose;
+		int meank;
+		bool isCropRequested;
+		bool isSampleRequested;
+		bool isFilterRequested;
 
 		Parameters(const int argc, char** argv)
 		{
@@ -78,8 +77,9 @@ namespace FPCFilter
 			options.add_options()
 				("i,input", "Input point cloud", cxxopts::value<std::string>())
 				("o,output", "Output point cloud", cxxopts::value<std::string>())
-				("b,boundary", "Process boundary (GeoJSON POLYGON)", cxxopts::value<std::string>()->default_value(""))
-				("s,std", "Standard deviation", cxxopts::value<double>()->default_value(DEFAULT_STD_DEV))
+				("b,boundary", "Crop boundary (GeoJSON POLYGON)", cxxopts::value<std::string>()->default_value(""))
+				("s,std", "Standard deviation threshold", cxxopts::value<double>()->default_value(DEFAULT_STD_DEV))
+				("m,meank", "Mean number of neighbors", cxxopts::value<int>()->default_value(DEFAULT_MEANK))
 				("r,radius", "Sample radius", cxxopts::value<double>()->default_value(DEFAULT_SAMPLE_RADIUS))
 				("c,concurrency", "Max concurrency", cxxopts::value<int>()->default_value("0"))
 				("v,verbose", "Verbose output", cxxopts::value<bool>()->default_value(DEFAULT_VERBOSE));
@@ -107,12 +107,21 @@ namespace FPCFilter
 			std = result["std"].as<double>();
 
 			if (std < 0)
-				throw std::invalid_argument("Standard deviation cannot be less than 0");
+				throw std::invalid_argument("Standard deviation threshold cannot be less than 0");
+
+			meank = result["meank"].as<int>();
+
+			if (meank < 1)
+				throw std::invalid_argument("Mean number of neighbors cannot be less than 1");
+
+			isFilterRequested = true;
 
 			radius = result["radius"].as<double>();
 
 			if (radius < 0)
-				throw std::invalid_argument("Radius cannot be less than 0");
+				throw std::invalid_argument("Sample radius cannot be less than 0");
+
+			isSampleRequested = radius != 0;
 
 			concurrency = result["concurrency"].as<int>();
 
@@ -132,6 +141,8 @@ namespace FPCFilter
 
 				if (!boundary.has_value())
 					throw std::invalid_argument(string_format("Boundary file '{}' does not contain a valid GeoJSON POLYGON", boundaryFile));
+
+				isCropRequested = true;
 
 			}
 

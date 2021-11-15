@@ -1,6 +1,12 @@
 
 #pragma once
 
+#ifdef DEBUG
+#define DEFAULT_VERBOSE "true"
+#else
+#define DEFAULT_VERBOSE "false"
+#endif
+
 #include <memory>
 #include <string>
 #include <stdexcept>
