@@ -49,8 +49,10 @@ namespace FPCFilter {
             size_t j;
 
             for (i = 0, j = points.size() - 1; i < points.size(); j = i++) {
-                const auto  xi = points[i].x, yi = points[i].y;
-                const auto  xj = points[j].x, yj = points[j].y;
+                const auto xi = points[i].x;
+                const auto yi = points[i].y;
+                const auto xj = points[j].x;
+                const auto yj = points[j].y;
 
                 const auto intersect = ((yi > y) != (yj > y))
                     && (x < (xj - xi)* (y - yi) / (yj - yi) + xi);

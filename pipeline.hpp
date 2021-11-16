@@ -14,12 +14,11 @@ namespace FPCFilter
 
     class Pipeline {
         
-        //std::unique_ptr<happly::PLYData> ply;
-        std::vector<float> vrtX;
-        std::vector<float> vrtY;
-        std::vector<float> vrtZ;
+        std::unique_ptr<std::vector<float>> vrtX;
+        std::unique_ptr<std::vector<float>> vrtY;
+        std::unique_ptr<std::vector<float>> vrtZ;
 
-        std::vector<size_t> indexes;
+        std::unique_ptr<std::vector<size_t>> indexes;
 
         std::string source;
                  

@@ -59,11 +59,9 @@ int main(const int argc, char** argv)
 
 			std::cout << "OK" << std::endl;
 
-		} else
-		{
+		} else		
 			std::cout << std::endl << " -> Skipping crop" << std::endl;
-		}
-
+		
 		if (parameters.isSampleRequested)
 		{
 
@@ -74,10 +72,8 @@ int main(const int argc, char** argv)
 			std::cout << "OK" << std::endl;
 
 		}
-		else
-		{
+		else		
 			std::cout << std::endl << " -> Skipping sampling" << std::endl;
-		}
 		
 		if (parameters.isFilterRequested)
 		{
@@ -89,11 +85,9 @@ int main(const int argc, char** argv)
 			std::cout << "OK" << std::endl;
 
 		}
-		else
-		{
+		else		
 			std::cout << std::endl << " -> Skipping statistical filtering" << std::endl;
-		}
-
+		
 		std::cout << std::endl << " -> Writing output ";
 
 		pipeline.write(parameters.output);
