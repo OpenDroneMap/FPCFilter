@@ -8,8 +8,6 @@
 #include "parameters.hpp"
 #include "vendor/loguru/loguru.hpp"
 
-namespace fs = std::filesystem;
-
 int main(const int argc, char** argv)
 {
 	std::cout << " *** FPCFilter - v" << FPCFilter_VERSION_MAJOR << "." << FPCFilter_VERSION_MINOR << " ***" << std::endl << std::endl;
@@ -44,11 +42,7 @@ int main(const int argc, char** argv)
 		} else		
 			loguru::add_file("debug.log", loguru::Append, loguru::Verbosity_INFO);
 
-		std::cout << " -> Loading point cloud ";
-
 		FPCFilter::Pipeline pipeline(parameters.input);
-
-		std::cout << "OK" << std::endl;
 
 		if (parameters.isCropRequested)
 		{

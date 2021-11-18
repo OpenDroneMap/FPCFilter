@@ -63,9 +63,9 @@ namespace FPCFilter
 		int concurrency;
 		bool verbose;
 		int meank;
-		bool isCropRequested;
-		bool isSampleRequested;
-		bool isFilterRequested;
+		bool isCropRequested = false;;
+		bool isSampleRequested = false;
+		bool isFilterRequested = false;
 
 		Parameters(const int argc, char** argv)
 		{
