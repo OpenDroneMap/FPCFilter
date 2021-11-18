@@ -33,13 +33,10 @@
 
 	class PlyFile {
 	public:
-		std::unique_ptr<std::vector<PlyExtra>> extras;
-		std::unique_ptr<std::vector<PlyPoint>> points;
+		std::vector<PlyExtra> extras;
+		std::vector<PlyPoint> points;
 
 		PlyFile(const std::string& path, const std::function<bool(const float x, const float y, const float z)> filter = nullptr) {
-
-			this->extras = std::make_unique<std::vector<PlyExtra>>();
-			this->points = std::make_unique<std::vector<PlyPoint>>();
 
 			std::ifstream reader(path, std::ifstream::binary);
 
@@ -118,11 +115,11 @@
 
 			bool hasNormals = properties.size() == 10;
 
-			points->reserve(count);
+			points.reserve(count);
 			
 			if (hasNormals) {
 
-				extras->reserve(count);
+				extras.reserve(count);
 
 				if (filter) {
 
@@ -149,8 +146,8 @@
 						reader.read(reinterpret_cast<char*>(&views), sizeof(uint8_t));
 
 						if (filter(x, y, z)) {
-							points->emplace_back(x, y, z, red, green, blue, views);
-							extras->emplace_back(nx, ny, nz);
+							points.emplace_back(x, y, z, red, green, blue, views);
+							extras.emplace_back(nx, ny, nz);
 						}
 					}
 					
@@ -179,8 +176,8 @@
 
 						reader.read(reinterpret_cast<char*>(&views), sizeof(uint8_t));
 
-						points->emplace_back(x, y, z, red, green, blue, views);
-						extras->emplace_back(nx, ny, nz);
+						points.emplace_back(x, y, z, red, green, blue, views);
+						extras.emplace_back(nx, ny, nz);
 
 					}
 
@@ -208,7 +205,7 @@
 						reader.read(reinterpret_cast<char*>(&views), sizeof(uint8_t));
 
 						if (filter(x, y, z)) {
-							points->emplace_back(x, y, z, red, green, blue, views);
+							points.emplace_back(x, y, z, red, green, blue, views);
 						}
 					}
 					
@@ -232,7 +229,7 @@
 
 						reader.read(reinterpret_cast<char*>(&views), sizeof(uint8_t));
 
-						points->emplace_back(x, y, z, red, green, blue, views);
+						points.emplace_back(x, y, z, red, green, blue, views);
 
 					}					
 				}
