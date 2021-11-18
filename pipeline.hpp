@@ -2,36 +2,38 @@
 #pragma once
 
 #include <iostream>
+#include <functional>
+#include <filesystem>
 #include "vendor/octree.hpp"
 #include "vendor/happly.hpp"
+#include "ply.hpp"
 #include "common.hpp"
-#include <unordered_set>
+
+namespace fs = std::filesystem;
 
 namespace FPCFilter
 {
 
-    #define VRT "vertex"
+	class Pipeline {
 
-    class Pipeline {
-        
-        std::unique_ptr<std::vector<float>> vrtX;
-        std::unique_ptr<std::vector<float>> vrtY;
-        std::unique_ptr<std::vector<float>> vrtZ;
+		std::unique_ptr<PlyFile> ply;
 
-        std::unique_ptr<std::vector<size_t>> indexes;
+		std::string source;
+		bool isLoaded = false;
 
-        std::string source;
-                 
-        public:
+	public:
 
-            Pipeline(const std::string& source);
+		Pipeline(const std::string& source) : source(source) {}
 
-            void crop(const Polygon& p);
-            void sample(double radius);
-            void filter(double std, int meank);
+		void load();
+		void crop(const Polygon& p);
+		void sample(double radius);
+		void filter(double std, int meank);
 
-            void write(const std::string& output);
+		void write(const std::string& output);
 
-    };
+	};
+
+
 
 }

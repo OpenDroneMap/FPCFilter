@@ -1,7 +1,6 @@
 
 #include <iostream>
 #include <filesystem>
-#include <omp.h>
 #include "common.hpp"
 #include "FPCFilter.h"
 #include "pipeline.hpp"
