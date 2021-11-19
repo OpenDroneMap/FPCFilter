@@ -1,10 +1,10 @@
 
 #include <iostream>
 #include <filesystem>
-#include "common.hpp"
 #include "FPCFilter.h"
 #include "pipeline.hpp"
 #include "parameters.hpp"
+
 #include "vendor/loguru/loguru.hpp"
 
 int main(const int argc, char** argv)

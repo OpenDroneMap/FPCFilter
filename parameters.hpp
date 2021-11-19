@@ -1,3 +1,4 @@
+#pragma once
 
 #include <iostream>
 #include <fstream>
@@ -33,7 +34,6 @@ namespace FPCFilter
 
 			if (features.empty())
 				return std::nullopt;
-
 
 			for (const auto& f : features)
 			{

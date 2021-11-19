@@ -2,6 +2,9 @@
 #pragma once
 
 #include <iostream>
+#include <fstream>
+#include <optional>
+#include "vendor/json.hpp"
 
 namespace FPCFilter
 {

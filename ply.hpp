@@ -37,6 +37,10 @@ namespace FPCFilter {
 		std::vector<PlyExtra> extras;
 		std::vector<PlyPoint> points;
 
+        bool hasNormals() {
+            return !extras.empty();
+        }
+
 		PlyFile(const std::string& path, const std::function<bool(const float x, const float y, const float z)> filter = nullptr) {
 
 			std::ifstream reader(path, std::ifstream::binary);
@@ -254,7 +258,7 @@ namespace FPCFilter {
 			o << "property float y" << std::endl;
 			o << "property float z" << std::endl;
 
-			const auto hasNormals = !this->extras.empty();
+			const auto hasNormals = this->hasNormals();
 
 			if (hasNormals)
 			{

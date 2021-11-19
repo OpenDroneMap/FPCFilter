@@ -4,6 +4,8 @@
 #include <iostream>
 #include <functional>
 #include <filesystem>
+#include <map>
+
 #include "vendor/octree.hpp"
 #include "vendor/happly.hpp"
 #include "ply.hpp"
@@ -19,7 +21,7 @@ namespace FPCFilter
 		std::unique_ptr<PlyFile> ply;
 
 		std::string source;
-		bool isLoaded = false;
+		bool isLoaded = false;		
 
 	public:
 

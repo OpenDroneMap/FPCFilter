@@ -2,6 +2,7 @@
 #include <iostream>
 #include <filesystem>
 #include "pipeline.hpp"
+#include "fastsamplefilter.hpp"
 #include "vendor/loguru/loguru.hpp"
 
 namespace fs = std::filesystem;
@@ -42,13 +43,16 @@ namespace FPCFilter
 		if (!this->isLoaded) 
 			this->load();
 		
+		FastSampleFilter filter(radius);
+
+		filter.run(*this->ply);
 
 	}
 
 	void Pipeline::filter(double std, int meank)
 	{
-	}
 
+	}
 
 	void Pipeline::write(const std::string& target)
 	{
