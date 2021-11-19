@@ -29,6 +29,8 @@ namespace FPCFilter
 					return p.inside(x, y);
 				});
 
+			this->isLoaded = true;
+
 			return;
 		}
 
@@ -37,6 +39,9 @@ namespace FPCFilter
 
 	void Pipeline::sample(double radius)
 	{
+		if (!this->isLoaded) 
+			this->load();
+		
 
 	}
 
@@ -48,15 +53,21 @@ namespace FPCFilter
 	void Pipeline::write(const std::string& target)
 	{
 
-		if (!this->isLoaded)
-		{
+		if (!this->isLoaded)		
 			this->load();
-		}
 
 		if (fs::exists(target))
 			fs::remove(target);
 
-		// TODO
+		std::ofstream writer(target, std::ofstream::binary);
+
+		if (!writer.is_open())
+			throw std::invalid_argument(std::string("Cannot open file ") + target);
+
+		this->ply->write(writer);
+
+		writer.close();
+
 	};
 
 }
