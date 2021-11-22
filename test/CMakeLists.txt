@@ -29,5 +29,12 @@ target_link_libraries(
   gtest_main
 )
 
+add_subdirectory(vendor/curly)
+target_link_libraries(fpcfilter_test curly.hpp)
+
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../vendor")
+
+#target_link_libraries(fpcfilter_test curly.hpp)
+
 include(GoogleTest)
 gtest_discover_tests(fpcfilter_test)
