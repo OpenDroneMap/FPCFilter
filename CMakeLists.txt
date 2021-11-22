@@ -20,3 +20,6 @@ target_include_directories(FPCFilter PRIVATE "vendor")
 
 target_compile_definitions(FPCFilter PUBLIC "$<$<CONFIG:DEBUG>:DEBUG>")
 
+if(BUILD_TESTING)
+    add_subdirectory("test")
+endif()
