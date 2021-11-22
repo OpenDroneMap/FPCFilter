@@ -3,6 +3,7 @@
 #include <filesystem>
 #include "pipeline.hpp"
 #include "fastsamplefilter.hpp"
+#include "fastoutlierfilter.hpp"
 #include "vendor/loguru/loguru.hpp"
 
 namespace fs = std::filesystem;
@@ -51,6 +52,12 @@ namespace FPCFilter
 
 	void Pipeline::filter(double std, int meank)
 	{
+		if (!this->isLoaded)		
+			this->load();
+
+		FastOutlierFilter filter(std, meank);
+
+		filter.run(*this->ply);
 
 	}
 
