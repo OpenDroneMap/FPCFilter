@@ -3,9 +3,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 #include "testarea.h"
 
-#define LOGURU_WITH_STREAMS 1
-#include "../vendor/loguru/loguru.hpp"
-
 TestArea::TestArea(const std::string &name, bool recreateIfExists)
     : name(name){
     const auto root = getFolder();
@@ -15,8 +12,8 @@ TestArea::TestArea(const std::string &name, bool recreateIfExists)
 
     if (recreateIfExists){
         if (fs::exists(root)){
-        	LOG_S(INFO) << "Removing " << root;
-            LOG_S(INFO) << "Removed " << fs::remove_all(root) << " files/folders";
+        	std::cout << "Removing " << root << std::endl;
+            std::cout << "Removed " << fs::remove_all(root) << " files/folders" << std::endl;
         }
     }
 }
@@ -28,7 +25,7 @@ fs::path TestArea::getFolder(const fs::path &subfolder){
 
     if (!fs::exists(dir)){
         fs::create_directories(dir);
-        LOG_S(INFO) << "Created test folder " << dir;
+        std::cout << "Created test folder " << dir << std::endl;
     }
     return dir;
 }

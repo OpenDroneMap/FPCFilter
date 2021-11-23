@@ -75,6 +75,12 @@
         "cstdarg": "cpp",
         "mutex": "cpp",
         "stop_token": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "any": "cpp",
+        "condition_variable": "cpp",
+        "csignal": "cpp",
+        "deque": "cpp",
+        "set": "cpp",
+        "variant": "cpp"
     }
 }
