@@ -33,6 +33,46 @@ namespace FPCFilter {
 	};
 
 	class PlyFile {
+
+		void skipComments(std::ifstream& reader) {
+
+			std::string line;
+
+			// Skip comments
+			do {
+				std::getline(reader, line);
+
+				if (line.find("element") == 0)
+					break;
+				else if (line.find("comment") == 0)
+					continue;
+				else
+					throw std::invalid_argument("Invalid PLY file");
+
+			} while (true);
+		}
+
+		int getVertexCount(std::ifstream& reader) {
+
+			std::string line;
+
+			// Split line into tokens
+			std::vector<std::string> tokens;
+
+			std::istringstream iss(line);
+			std::string token;
+			while (std::getline(iss, token, ' '))
+				tokens.push_back(token);
+
+			if (tokens.size() != 3)
+				throw std::invalid_argument("Invalid PLY file");
+
+			if (tokens[0] != "element" && tokens[1] != "vertex")
+				throw std::invalid_argument("Invalid PLY file");
+
+			return std::stoi(tokens[2]);
+		}
+
 	public:
 		std::vector<PlyExtra> extras;
 		std::vector<PlyPoint> points;
@@ -54,6 +94,103 @@ namespace FPCFilter {
 			if (line != "ply")
 				throw std::invalid_argument("Invalid PLY file");
 
+			std::getline(reader, line);
+
+			// We are reading an ascii ply
+			if (line == "format ascii 1.0") {
+
+				/*
+				Expected header:
+					element vertex 62217
+					property float x
+					property float y
+					property float z
+					property uchar diffuse_red
+					property uchar diffuse_green
+					property uchar diffuse_blue
+					property uchar views
+					end_header
+				*/
+
+				skipComments(reader);
+				const auto count = getVertexCount(reader);
+
+				std::getline(reader, line);
+				if (line != "property float x")
+					throw std::invalid_argument("Invalid PLY file (expected 'property float x')");
+
+				std::getline(reader, line);
+				if (line != "property float y")
+					throw std::invalid_argument("Invalid PLY file (expected 'property float y')");
+
+				std::getline(reader, line);
+				if (line != "property float z")
+					throw std::invalid_argument("Invalid PLY file (expected 'property float z')");
+
+				std::getline(reader, line);
+				if (line != "property uchar diffuse_red")
+					throw std::invalid_argument("Invalid PLY file (expected 'property uchar diffuse_red')");
+
+				std::getline(reader, line);
+				if (line != "property uchar diffuse_green")
+					throw std::invalid_argument("Invalid PLY file (expected 'property uchar diffuse_green')");
+
+				std::getline(reader, line);
+				if (line != "property uchar diffuse_blue")
+					throw std::invalid_argument("Invalid PLY file (expected 'property uchar diffuse_blue')");
+
+				std::getline(reader, line);
+				if (line != "property uchar views")
+					throw std::invalid_argument("Invalid PLY file (expected 'property uchar views')");
+
+				std::getline(reader, line);
+				if (line != "end_header")
+					throw std::invalid_argument("Invalid PLY file (expected 'end_header')");
+
+
+				if (filter) {
+
+					// Read points
+					for (auto i = 0; i < count; i++) {
+
+						float x, y, z;
+						uint8_t red, green, blue;
+						uint8_t views;
+
+						reader >> x >> y >> z >> red >> green >> blue >> views;
+
+						if (filter(x, y, z)) {
+							points.emplace_back(x, y, z, red, green, blue, views);
+						}
+					}
+
+				}
+				else {
+
+					// Read points
+					for (auto i = 0; i < count; i++) {
+
+						float x, y, z;
+						uint8_t red, green, blue;
+						uint8_t views;
+
+						reader >> x >> y >> z >> red >> green >> blue >> views;
+
+						points.emplace_back(x, y, z, red, green, blue, views);
+						
+					}
+				}				
+
+
+			// Otherwise it's a binary ply
+			} else if (line == "format binary_little_endian 1.0") {
+
+				
+
+			} else
+				throw std::invalid_argument("Invalid PLY file");
+
+			/*
 			std::getline(reader, line);
 			if (line != "format binary_little_endian 1.0")
 				throw std::invalid_argument("Unsupported PLY: only binary little endian files are supported");
@@ -239,7 +376,7 @@ namespace FPCFilter {
 
 					}
 				}
-			}
+			}*/
 
 			reader.close();
 
