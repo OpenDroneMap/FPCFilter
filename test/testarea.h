@@ -25,10 +25,10 @@ public:
     fs::path downloadTestAsset(const std::string &url, const std::string &filename, bool overwrite = false);
 };
 
-class FileDownloader : public net::download_handler {
+class file_dowloader : public net::download_handler {
 public:
-    FileDownloader(std::string& filename)
-    : stream_(filename.c_str(), std::ofstream::binary) {}
+    file_dowloader(const char* filename)
+        : stream_(filename, std::ofstream::binary) {}
 
     std::size_t write(const char* src, std::size_t size) override {
         stream_.write(src, static_cast<std::streamsize>(size));

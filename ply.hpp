@@ -34,16 +34,17 @@ namespace FPCFilter {
 
 	class PlyFile {
 
-		void skipComments(std::ifstream& reader) {
+		std::string getVertexLine(std::ifstream& reader) {
 
 			std::string line;
 
 			// Skip comments
 			do {
+				
 				std::getline(reader, line);
 
 				if (line.find("element") == 0)
-					break;
+					return line;
 				else if (line.find("comment") == 0)
 					continue;
 				else
@@ -52,9 +53,7 @@ namespace FPCFilter {
 			} while (true);
 		}
 
-		int getVertexCount(std::ifstream& reader) {
-
-			std::string line;
+		int getVertexCount(const std::string& line) {
 
 			// Split line into tokens
 			std::vector<std::string> tokens;
@@ -83,7 +82,7 @@ namespace FPCFilter {
 
 		PlyFile(const std::string& path, const std::function<bool(const float x, const float y, const float z)> filter = nullptr) {
 
-			std::ifstream reader(path, std::ifstream::binary);
+			std::ifstream reader(path);
 
 			if (!reader.is_open())
 				throw std::invalid_argument(std::string("Cannot open file ") + path);
@@ -112,8 +111,8 @@ namespace FPCFilter {
 					end_header
 				*/
 
-				skipComments(reader);
-				const auto count = getVertexCount(reader);
+				const auto vertexLine = getVertexLine(reader);
+				const auto count = getVertexCount(vertexLine);
 
 				std::getline(reader, line);
 				if (line != "property float x")
@@ -147,6 +146,7 @@ namespace FPCFilter {
 				if (line != "end_header")
 					throw std::invalid_argument("Invalid PLY file (expected 'end_header')");
 
+				points.reserve(count);
 
 				if (filter) {
 
@@ -154,16 +154,14 @@ namespace FPCFilter {
 					for (auto i = 0; i < count; i++) {
 
 						float x, y, z;
-						uint8_t red, green, blue;
-						uint8_t views;
+						int red, green, blue;
+						int views;
 
 						reader >> x >> y >> z >> red >> green >> blue >> views;
 
-						if (filter(x, y, z)) {
-							points.emplace_back(x, y, z, red, green, blue, views);
-						}
+						if (filter(x, y, z)) 
+							points.emplace_back(x, y, z, red, green, blue, views);						
 					}
-
 				}
 				else {
 
@@ -171,13 +169,12 @@ namespace FPCFilter {
 					for (auto i = 0; i < count; i++) {
 
 						float x, y, z;
-						uint8_t red, green, blue;
-						uint8_t views;
+						int red, green, blue;
+						int views;
 
 						reader >> x >> y >> z >> red >> green >> blue >> views;
 
-						points.emplace_back(x, y, z, red, green, blue, views);
-						
+						points.emplace_back(x, y, z, red, green, blue, views);						
 					}
 				}				
 
@@ -185,82 +182,75 @@ namespace FPCFilter {
 			// Otherwise it's a binary ply
 			} else if (line == "format binary_little_endian 1.0") {
 
+				/*
+				Expected header:
+					element vertex 2751907
+					property float32 x
+					property float32 y
+					property float32 z
+					property uint8 red
+					property uint8 green
+					property uint8 blue
+					property float32 nx
+					property float32 ny
+					property float32 nz
+					property uint8 views
+					end_header
+				*/
+
+				const auto vertexLine = getVertexLine(reader);
+				const auto count = getVertexCount(vertexLine);
+
+				std::getline(reader, line);
+				if (line != "property float32 x")
+					throw std::invalid_argument("Invalid PLY file (expected 'property float32 x')");
+
+				std::getline(reader, line);
+				if (line != "property float32 y")
+					throw std::invalid_argument("Invalid PLY file (expected 'property float32 y')");
+
+				std::getline(reader, line);
+				if (line != "property float32 z")
+					throw std::invalid_argument("Invalid PLY file (expected 'property float32 z')");
+
+				std::getline(reader, line);
+				if (line != "property uint8 red")
+					throw std::invalid_argument("Invalid PLY file (expected 'property uint8 red')");
+
+				std::getline(reader, line);
+				if (line != "property uint8 green")
+					throw std::invalid_argument("Invalid PLY file (expected 'property uint8 green')");
+
+				std::getline(reader, line);
+				if (line != "property uint8 blue")
+					throw std::invalid_argument("Invalid PLY file (expected 'property uint8 blue')");
+
+				std::getline(reader, line);
+				if (line != "property float32 nx")
+					throw std::invalid_argument("Invalid PLY file (expected 'property float32 nx')");
+
+				std::getline(reader, line);
+				if (line != "property float32 ny")
+					throw std::invalid_argument("Invalid PLY file (expected 'property float32 ny')");
+
+				std::getline(reader, line);
+				if (line != "property float32 nz")
+					throw std::invalid_argument("Invalid PLY file (expected 'property float32 nz')");
+
+				std::getline(reader, line);
+				if (line != "property uint8 views")
+					throw std::invalid_argument("Invalid PLY file (expected 'property uint8 views')");
+
+				std::getline(reader, line);
+				if (line != "end_header")
+					throw std::invalid_argument("Invalid PLY file (expected 'end_header')");
+
+				reader = std::ifstream(path, std::ifstream::binary);
 				
+				for (auto n = 0; n < 14; n++)
+					std::getline(reader, line);
 
-			} else
-				throw std::invalid_argument("Invalid PLY file");
-
-			/*
-			std::getline(reader, line);
-			if (line != "format binary_little_endian 1.0")
-				throw std::invalid_argument("Unsupported PLY: only binary little endian files are supported");
-
-
-			// Skip comments
-			do {
-				std::getline(reader, line);
-
-				if (line.find("element") == 0)
-					break;
-				else if (line.find("comment") == 0)
-					continue;
-				else
-					throw std::invalid_argument("Invalid PLY file");
-
-			} while (true);
-
-			// Split line into tokens
-			std::vector<std::string> tokens;
-
-			std::istringstream iss(line);
-			std::string token;
-			while (std::getline(iss, token, ' '))
-				tokens.push_back(token);
-
-			if (tokens.size() != 3)
-				throw std::invalid_argument("Invalid PLY file");
-
-			if (tokens[0] != "element" && tokens[1] != "vertex")
-				throw std::invalid_argument("Invalid PLY file");
-
-			const auto count = std::stoi(tokens[2]);
-
-			std::vector<std::string> properties;
-
-			// Read properties
-			do {
-				std::getline(reader, line);
-
-				if (line.find("property float x") == 0 ||
-					line.find("property float y") == 0 ||
-					line.find("property float z") == 0 ||
-					line.find("property float nx") == 0 ||
-					line.find("property float ny") == 0 ||
-					line.find("property float nz") == 0 ||
-					line.find("property uchar red") == 0 ||
-					line.find("property uchar blue") == 0 ||
-					line.find("property uchar green") == 0 ||
-					line.find("property uchar views") == 0) {
-
-					properties.push_back(line.substr(15));
-
-				}
-				else if (line.find("end_header") == 0)
-					break;
-				else
-					throw std::invalid_argument("Unsupported PLY file: only (x, y, z, [nx, ny, nz], red, green, blue, views) properties");
-
-			} while (true);
-
-			if (properties.size() != 7 && properties.size() != 10)
-				throw std::invalid_argument("Unsupported PLY file: only (x, y, z, [nx, ny, nz], red, green, blue, views) properties");
-
-			bool hasNormals = properties.size() == 10;
-
-			points.reserve(count);
-
-			if (hasNormals) {
-
+				points.reserve(count);
 				extras.reserve(count);
 
 				if (filter) {
@@ -277,13 +267,13 @@ namespace FPCFilter {
 						reader.read(reinterpret_cast<char*>(&y), sizeof(float));
 						reader.read(reinterpret_cast<char*>(&z), sizeof(float));
 
+						reader.read(reinterpret_cast<char*>(&red), sizeof(uint8_t));
+						reader.read(reinterpret_cast<char*>(&green), sizeof(uint8_t));
+						reader.read(reinterpret_cast<char*>(&blue), sizeof(uint8_t));
+
 						reader.read(reinterpret_cast<char*>(&nx), sizeof(float));
 						reader.read(reinterpret_cast<char*>(&ny), sizeof(float));
 						reader.read(reinterpret_cast<char*>(&nz), sizeof(float));
-
-						reader.read(reinterpret_cast<char*>(&red), sizeof(uint8_t));
-						reader.read(reinterpret_cast<char*>(&blue), sizeof(uint8_t));
-						reader.read(reinterpret_cast<char*>(&green), sizeof(uint8_t));
 
 						reader.read(reinterpret_cast<char*>(&views), sizeof(uint8_t));
 
@@ -308,13 +298,13 @@ namespace FPCFilter {
 						reader.read(reinterpret_cast<char*>(&y), sizeof(float));
 						reader.read(reinterpret_cast<char*>(&z), sizeof(float));
 
+						reader.read(reinterpret_cast<char*>(&red), sizeof(uint8_t));
+						reader.read(reinterpret_cast<char*>(&green), sizeof(uint8_t));
+						reader.read(reinterpret_cast<char*>(&blue), sizeof(uint8_t));
+
 						reader.read(reinterpret_cast<char*>(&nx), sizeof(float));
 						reader.read(reinterpret_cast<char*>(&ny), sizeof(float));
 						reader.read(reinterpret_cast<char*>(&nz), sizeof(float));
-
-						reader.read(reinterpret_cast<char*>(&red), sizeof(uint8_t));
-						reader.read(reinterpret_cast<char*>(&blue), sizeof(uint8_t));
-						reader.read(reinterpret_cast<char*>(&green), sizeof(uint8_t));
 
 						reader.read(reinterpret_cast<char*>(&views), sizeof(uint8_t));
 
@@ -322,62 +312,11 @@ namespace FPCFilter {
 						extras.emplace_back(nx, ny, nz);
 
 					}
-
 				}
 
-			}
-			else {
-
-				if (filter) {
-
-					// Read points
-					for (auto i = 0; i < count; i++) {
-
-						float x, y, z;
-						uint8_t red, green, blue;
-						uint8_t views;
-
-						reader.read(reinterpret_cast<char*>(&x), sizeof(float));
-						reader.read(reinterpret_cast<char*>(&y), sizeof(float));
-						reader.read(reinterpret_cast<char*>(&z), sizeof(float));
-
-						reader.read(reinterpret_cast<char*>(&red), sizeof(uint8_t));
-						reader.read(reinterpret_cast<char*>(&blue), sizeof(uint8_t));
-						reader.read(reinterpret_cast<char*>(&green), sizeof(uint8_t));
-
-						reader.read(reinterpret_cast<char*>(&views), sizeof(uint8_t));
-
-						if (filter(x, y, z)) {
-							points.emplace_back(x, y, z, red, green, blue, views);
-						}
-					}
-
-				}
-				else {
-
-					// Read points
-					for (auto i = 0; i < count; i++) {
-
-						float x, y, z;
-						uint8_t red, green, blue;
-						uint8_t views;
-
-						reader.read(reinterpret_cast<char*>(&x), sizeof(float));
-						reader.read(reinterpret_cast<char*>(&y), sizeof(float));
-						reader.read(reinterpret_cast<char*>(&z), sizeof(float));
-
-						reader.read(reinterpret_cast<char*>(&red), sizeof(uint8_t));
-						reader.read(reinterpret_cast<char*>(&blue), sizeof(uint8_t));
-						reader.read(reinterpret_cast<char*>(&green), sizeof(uint8_t));
-
-						reader.read(reinterpret_cast<char*>(&views), sizeof(uint8_t));
-
-						points.emplace_back(x, y, z, red, green, blue, views);
-
-					}
-				}
-			}*/
-
+			} else
+				throw std::invalid_argument("Invalid PLY file");
+					
 			reader.close();
 
 		}

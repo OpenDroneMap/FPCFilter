@@ -3,15 +3,16 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 #include "testarea.h"
 
+#include <chrono>
+
 TestArea::TestArea(const std::string &name, bool recreateIfExists)
     : name(name){
     const auto root = getFolder();
 
     if (name.find("..") != std::string::npos) throw std::runtime_error ("Cannot use .. in name");;
-
-
+    
     if (recreateIfExists){
-        if (fs::exists(root)){
+        if (exists(root)){
         	std::cout << "Removing " << root << std::endl;
             std::cout << "Removed " << fs::remove_all(root) << " files/folders" << std::endl;
         }
@@ -23,8 +24,8 @@ fs::path TestArea::getFolder(const fs::path &subfolder){
     auto dir = root;
     if (!subfolder.empty()) dir = dir / subfolder;
 
-    if (!fs::exists(dir)){
-        fs::create_directories(dir);
+    if (!exists(dir)){
+	    create_directories(dir);
         std::cout << "Created test folder " << dir << std::endl;
     }
     return dir;
@@ -33,20 +34,19 @@ fs::path TestArea::getFolder(const fs::path &subfolder){
 fs::path TestArea::downloadTestAsset(const std::string &url, const std::string &filename, bool overwrite){
     fs::path destination = getFolder() / fs::path(filename);
 
-    if (fs::exists(destination)){
+    if (exists(destination)){
         if (!overwrite) return destination;
-        else fs::remove(destination);
+        fs::remove(destination);
     }
 
-    net::request_builder()
+    net::performer performer;
+
+    const auto req = net::request_builder()
         .url(url)
-        .downloader<FileDownloader>(destination.string())
+        .downloader<file_dowloader>(destination.string().c_str())
+        .verification(false)
         .send().wait();
-/*
-    net::Request r = net::GET(url);
-    r.verifySSL(false);
-    r.downloadToFile(destination.string());
-*/
+
     return destination;
 }
 
