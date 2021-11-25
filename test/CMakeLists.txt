@@ -10,8 +10,12 @@ FetchContent_MakeAvailable(googletest)
 
 file(GLOB TEST_SOURCES "*.cpp")
 
+set(TEST_SOURCES
+   ${TEST_SOURCES}
+   ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/loguru/loguru.cpp   
+)
 #include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../vendor/loguru")
-file(GLOB TEST_SOURCES "../vendor/loguru/*")
+#file(GLOB TEST_SOURCES "../vendor/loguru/*")
 
 enable_testing()
 
