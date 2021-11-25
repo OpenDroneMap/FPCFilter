@@ -7,7 +7,6 @@
 
 #define ABS_ERROR 0.00001
 
-// Demonstrate some basic assertions.
 TEST(PlyFileTest, LoadAscii) {
 
 	TestArea ta("PlyFileTest");
@@ -45,7 +44,6 @@ TEST(PlyFileTest, LoadAscii) {
 
 }
 
-// Demonstrate some basic assertions.
 TEST(PlyFileTest, LoadBinary) {
 
 	TestArea ta("PlyFileTest");
@@ -90,5 +88,23 @@ TEST(PlyFileTest, LoadBinary) {
 	EXPECT_NEAR(ply.extras[2].nx, -0.0121546201, ABS_ERROR);
 	EXPECT_NEAR(ply.extras[2].ny, 0.0412164144, ABS_ERROR);
 	EXPECT_NEAR(ply.extras[2].nz, 0.999076307, ABS_ERROR);
+
+}
+
+
+
+TEST(Pipeline, Load) {
+
+	TestArea ta("PlyFileTest");
+
+	const auto path = ta.downloadTestAsset(ASCII_PLY, "ascii.ply");
+
+	FPCFilter::Pipeline pipeline(path.generic_string());
+
+	pipeline.load();
+
+	const auto destPath = (ta.getFolder() / "out.ply").generic_string();
+
+	pipeline.write(destPath);
 
 }
