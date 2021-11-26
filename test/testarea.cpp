@@ -34,18 +34,18 @@ fs::path TestArea::getFolder(const fs::path &subfolder){
 fs::path TestArea::downloadTestAsset(const std::string &url, const std::string &filename, bool overwrite){
     fs::path destination = getFolder() / fs::path(filename);
 
-    if (exists(destination)){
+    if (exists(destination) && file_size(destination)) {
         if (!overwrite) return destination;
         fs::remove(destination);
     }
 
     net::performer performer;
 
-    const auto req = net::request_builder()
-        .url(url)
-        .downloader<file_dowloader>(destination.string().c_str())
-        .verification(false)
-        .send().wait();
+    net::request_builder()
+	    .url(url)
+	    .downloader<file_dowloader>(destination.string().c_str())
+	    .verification(false)
+	    .send().wait();
 
     return destination;
 }
