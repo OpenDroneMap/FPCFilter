@@ -6,8 +6,10 @@
 #include <filesystem>
 #include <map>
 
-#include "vendor/octree.hpp"
-#include "vendor/happly.hpp"
+#include <fstream>
+#include <sstream>
+#include <string>
+
 #include "ply.hpp"
 #include "common.hpp"
 

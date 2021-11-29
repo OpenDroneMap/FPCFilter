@@ -2,10 +2,35 @@
 #include "../pipeline.hpp"
 #include "testarea.h"
 
+#include "vendor/happly.hpp"
+
+#include <cstring>
+#include <iostream>
+#include <string>
+
 #define ASCII_PLY "https://raw.githubusercontent.com/DroneDB/test_data/master/point-clouds/brighton_reconstruction.ply"
 #define BINARY_PLY "https://github.com/DroneDB/test_data/raw/master/point-clouds/brighton_dense_input.ply"
+#define PDAL_PLY "https://github.com/DroneDB/test_data/raw/master/point-clouds/output_brighton_pdal.ply"
 
 #define ABS_ERROR 0.00001
+
+
+bool samePointCloud(const std::string& file1, const std::string& file2) {
+
+	happly::PLYData ply1(file1), ply2(file2);
+
+	const auto pn1 = ply1.getElement("vertex").getPropertyNames();
+	const auto pn2 = ply2.getElement("vertex").getPropertyNames();
+
+	EXPECT_EQ(pn1.size(), pn2.size()) << "Vectors x and y are of unequal length";
+
+	for (int i = 0; i < pn1.size(); ++i) {
+		EXPECT_EQ(pn1[i], pn2[i]) << "Vectors x and y differ at index " << i;
+	}
+
+	return true;
+}
+
 
 TEST(PlyFileTest, LoadAscii) {
 
@@ -92,7 +117,6 @@ TEST(PlyFileTest, LoadBinary) {
 }
 
 
-
 TEST(Pipeline, Load) {
 
 	TestArea ta("PlyFileTest");
@@ -106,5 +130,23 @@ TEST(Pipeline, Load) {
 	const auto destPath = (ta.getFolder() / "out.ply").generic_string();
 
 	pipeline.write(destPath);
+
+}
+
+TEST(Pipeline, Filter) {
+	
+	TestArea ta("PlyFileTest");
+
+	const auto path = ta.downloadTestAsset(PDAL_PLY, "ascii.ply");
+
+	FPCFilter::Pipeline pipeline(path.generic_string());
+
+	pipeline.filter(2.5, 16);
+
+	const auto destPath = (ta.getFolder() / "out.ply").generic_string();
+
+	pipeline.write(destPath);
+
+	ASSERT_TRUE(samePointCloud(path.generic_string(), destPath));
 
 }
