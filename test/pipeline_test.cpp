@@ -133,6 +133,7 @@ TEST(Pipeline, Load) {
 
 }
 
+/*
 TEST(Pipeline, Filter) {
 	
 	TestArea ta("PlyFileTest");
@@ -149,4 +150,4 @@ TEST(Pipeline, Filter) {
 
 	ASSERT_TRUE(samePointCloud(path.generic_string(), destPath));
 
-}
+}*/

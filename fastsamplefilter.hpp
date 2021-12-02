@@ -9,9 +9,41 @@
 
 namespace FPCFilter {
 
+    template <class T> 
+    class PointXYZ {
+    public:
+        T x, y, z;
+        PointXYZ(T x, T y, T z) : x(x), y(y), z(z) {}
+
+        bool operator==(const PointXYZ &other) const {
+            return x == other.x && y == other.y && z == other.z;
+        }
+
+        bool operator!=(const PointXYZ &other) const {
+            return !(*this == other);
+        }
+
+        bool operator<(const PointXYZ &other) const {
+            return std::tie(x, y, z) < std::tie(other.x, other.y, other.z);
+        }
+
+        bool operator>(const PointXYZ &other) const {
+            return std::tie(x, y, z) > std::tie(other.x, other.y, other.z);
+        }
+
+        bool operator<=(const PointXYZ &other) const {
+            return std::tie(x, y, z) <= std::tie(other.x, other.y, other.z);
+        }
+
+        bool operator>=(const PointXYZ &other) const {
+            return std::tie(x, y, z) >= std::tie(other.x, other.y, other.z);
+        }
+
+    };
+
     class FastSampleFilter {
-        using Voxel = std::tuple<int, int, int>;
-        using Coord = std::tuple<double, double, double>;
+        using Voxel = PointXYZ<int>;
+        using Coord = PointXYZ<double>;
         using CoordList = std::vector<Coord>;
 
     public:
@@ -89,9 +121,9 @@ namespace FPCFilter {
             double z = point.z;
 
             // Get voxel indices for current point.
-            Voxel v = std::make_tuple((int)(std::floor((x - m_originX) / m_cell)),
-                                    (int)(std::floor((y - m_originY) / m_cell)),
-                                    (int)(std::floor((z - m_originZ) / m_cell)));
+            auto v = Voxel((int)(std::floor((x - m_originX) / m_cell)), 
+                              (int)(std::floor((y - m_originY) / m_cell)), 
+                              (int)(std::floor((z - m_originZ) / m_cell)));
 
             // Check current voxel before any of the neighbors. We will most often have
             // points that are too close in the point's enclosing voxel, thus saving
@@ -104,9 +136,9 @@ namespace FPCFilter {
                 {
                     // Compute Euclidean distance between current point and
                     // candidate voxel.
-                    double xv = std::get<0>(coord);
-                    double yv = std::get<1>(coord);
-                    double zv = std::get<2>(coord);
+                    double xv = coord.x;
+                    double yv = coord.y;
+                    double zv = coord.z;
                     double distSqr =
                         (xv - x) * (xv - x) + (yv - y) * (yv - y) + (zv - z) * (zv - z);
 
@@ -120,13 +152,13 @@ namespace FPCFilter {
 
             // Iterate over immediate neighbors of current voxel, computing minimum
             // distance between any already added point and the current point.
-            for (int xi = std::get<0>(v) - 1; xi < std::get<0>(v) + 2; ++xi)
+            for (int xi = v.x - 1; xi < v.x + 2; ++xi)
             {
-                for (int yi = std::get<1>(v) - 1; yi < std::get<1>(v) + 2; ++yi)
+                for (int yi = v.y - 1; yi < v.y + 2; ++yi)
                 {
-                    for (int zi = std::get<2>(v) - 1; zi < std::get<2>(v) + 2; ++zi)
+                    for (int zi = v.z - 1; zi < v.z + 2; ++zi)
                     {
-                        Voxel candidate = std::make_tuple(xi, yi, zi);
+                        auto candidate = Voxel(xi, yi, zi);
 
                         // We have already visited the center voxel, and can skip it.
                         if (v == candidate)
@@ -143,9 +175,9 @@ namespace FPCFilter {
                         {
                             // Compute Euclidean distance between current point and
                             // candidate voxel.
-                            double xv = std::get<0>(coord);
-                            double yv = std::get<1>(coord);
-                            double zv = std::get<2>(coord);
+                            double xv = coord.x;
+                            double yv = coord.y;
+                            double zv = coord.z;
                             double distSqr = (xv - x) * (xv - x) + (yv - y) * (yv - y) +
                                             (zv - z) * (zv - z);
 
@@ -159,7 +191,7 @@ namespace FPCFilter {
                 }
             }
 
-            Coord coord = std::make_tuple(x, y, z);
+            auto coord = Coord(x, y, z);
             if (m_populatedVoxels.find(v) != m_populatedVoxels.end())
             {
                 m_populatedVoxels[v].push_back(coord);
