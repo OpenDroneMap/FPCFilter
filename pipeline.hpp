@@ -32,7 +32,7 @@ namespace FPCFilter
 	public:
 		Pipeline(const std::string &source) : source(source) {}
 
-		void Pipeline::load()
+		void load()
 		{
 
 			this->ply = std::make_unique<PlyFile>(this->source);
@@ -40,7 +40,7 @@ namespace FPCFilter
 			this->isLoaded = true;
 		}
 
-		void Pipeline::crop(const Polygon &p)
+		void crop(const Polygon &p)
 		{
 
 			if (!this->isLoaded)
@@ -56,7 +56,7 @@ namespace FPCFilter
 			throw NotImplementedException("Filtering loaded ply is not supported");
 		}
 
-		void Pipeline::sample(double radius)
+		void sample(double radius)
 		{
 			if (!this->isLoaded)
 				this->load();
@@ -66,7 +66,7 @@ namespace FPCFilter
 			filter.run(*this->ply);
 		}
 
-		void Pipeline::filter(double std, int meank)
+		void filter(double std, int meank)
 		{
 			if (!this->isLoaded)
 				this->load();
@@ -76,7 +76,7 @@ namespace FPCFilter
 			filter.run(*this->ply);
 		}
 
-		void Pipeline::write(const std::string &target)
+		void write(const std::string &target)
 		{
 
 			if (!this->isLoaded)
