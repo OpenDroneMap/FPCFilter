@@ -9,45 +9,77 @@
 namespace FPCFilter
 {
 
+	template <class T> 
+    class PointXYZ {
+    public:
+        T x, y, z;
+        PointXYZ(T x, T y, T z) : x(x), y(y), z(z) {}
+
+        bool operator==(const PointXYZ &other) const {
+            return x == other.x && y == other.y && z == other.z;
+        }
+
+        bool operator!=(const PointXYZ &other) const {
+            return !(*this == other);
+        }
+
+        bool operator<(const PointXYZ &other) const {
+            return std::tie(x, y, z) < std::tie(other.x, other.y, other.z);
+        }
+
+        bool operator>(const PointXYZ &other) const {
+            return std::tie(x, y, z) > std::tie(other.x, other.y, other.z);
+        }
+
+        bool operator<=(const PointXYZ &other) const {
+            return std::tie(x, y, z) <= std::tie(other.x, other.y, other.z);
+        }
+
+        bool operator>=(const PointXYZ &other) const {
+            return std::tie(x, y, z) >= std::tie(other.x, other.y, other.z);
+        }
+
+    };
+
 	// Point class (x, y)
-	class Point2
+	class PointXY
 	{
 	public:
 		float x;
 		float y;
-		Point2(float x, float y) : x(x), y(y) {}
+		PointXY(float x, float y) : x(x), y(y) {}
 	};
 
 	class Polygon
 	{
 
 	private:
-		std::vector<Point2> points;
+		std::vector<PointXY> points;
 
 	public:
 		Polygon() {}
-		Polygon(std::vector<Point2> points) : points(points) {}
+		Polygon(std::vector<PointXY> points) : points(points) {}
 		Polygon(std::vector<float> x, std::vector<float> y)
 		{
 			for (int i = 0; i < x.size(); i++)
 			{
-				this->points.push_back(Point2(x[i], y[i]));
+				this->points.push_back(PointXY(x[i], y[i]));
 			}
 		}
 
-		std::vector<Point2> getPoints()
+		std::vector<PointXY> getPoints()
 		{
 			return this->points;
 		}
 
-		void addPoint(Point2 point)
+		void addPoint(PointXY point)
 		{
 			this->points.push_back(point);
 		}
 
 		void addPoint(float x, float y)
 		{
-			this->points.push_back(Point2(x, y));
+			this->points.push_back(PointXY(x, y));
 		}
 
 		bool inside(float x, float y) const
@@ -76,7 +108,7 @@ namespace FPCFilter
 			return inside;
 		};
 
-		bool inside(const Point2& point) const
+		bool inside(const PointXY& point) const
 		{
 			return inside(point.x, point.y);
 		};

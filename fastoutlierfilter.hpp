@@ -57,7 +57,6 @@ namespace FPCFilter {
         double m_multiplier;
         int m_meanK;
 
-        //PlyFile& file;
         std::unique_ptr<KDTree> tree;
 
     public:

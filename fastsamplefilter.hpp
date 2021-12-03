@@ -6,40 +6,9 @@
 #include <vector>
 
 #include "ply.hpp"
+#include "common.hpp"
 
 namespace FPCFilter {
-
-    template <class T> 
-    class PointXYZ {
-    public:
-        T x, y, z;
-        PointXYZ(T x, T y, T z) : x(x), y(y), z(z) {}
-
-        bool operator==(const PointXYZ &other) const {
-            return x == other.x && y == other.y && z == other.z;
-        }
-
-        bool operator!=(const PointXYZ &other) const {
-            return !(*this == other);
-        }
-
-        bool operator<(const PointXYZ &other) const {
-            return std::tie(x, y, z) < std::tie(other.x, other.y, other.z);
-        }
-
-        bool operator>(const PointXYZ &other) const {
-            return std::tie(x, y, z) > std::tie(other.x, other.y, other.z);
-        }
-
-        bool operator<=(const PointXYZ &other) const {
-            return std::tie(x, y, z) <= std::tie(other.x, other.y, other.z);
-        }
-
-        bool operator>=(const PointXYZ &other) const {
-            return std::tie(x, y, z) >= std::tie(other.x, other.y, other.z);
-        }
-
-    };
 
     class FastSampleFilter {
         using Voxel = PointXYZ<int>;
