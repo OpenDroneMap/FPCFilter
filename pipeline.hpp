@@ -15,7 +15,6 @@
 
 #include "fastsamplefilter.hpp"
 #include "fastoutlierfilter.hpp"
-#include "vendor/loguru/loguru.hpp"
 
 namespace fs = std::filesystem;
 
@@ -35,8 +34,6 @@ namespace FPCFilter
 
 		void Pipeline::load()
 		{
-
-			LOG_F(INFO, "Loading %s", source.c_str());
 
 			this->ply = std::make_unique<PlyFile>(this->source);
 

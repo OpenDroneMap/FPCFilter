@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 find_package(OpenMP REQUIRED)
 file(GLOB SOURCES "*.cpp")
-add_subdirectory("vendor/loguru")
 add_executable(FPCFilter ${SOURCES})
 
 if(OpenMP_CXX_FOUND)

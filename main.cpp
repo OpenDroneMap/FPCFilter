@@ -5,8 +5,6 @@
 #include "pipeline.hpp"
 #include "parameters.hpp"
 
-#include "vendor/loguru/loguru.hpp"
-
 int main(const int argc, char** argv)
 {
 	std::cout << " *** FPCFilter - v" << FPCFilter_VERSION_MAJOR << "." << FPCFilter_VERSION_MINOR << " ***" << std::endl << std::endl;
@@ -30,17 +28,7 @@ int main(const int argc, char** argv)
         std::cout << "\tconcurrency = " << parameters.concurrency << std::endl;
         std::cout << "\tverbose = " << (parameters.verbose ? "yes" : "no") << std::endl;
 		std::cout << std::endl;
-
-		loguru::g_preamble_file = false;
-		loguru::g_preamble_uptime = false;
-
-		if (parameters.verbose) {
-			loguru::g_stderr_verbosity = loguru::Verbosity_MAX;
-			loguru::g_colorlogtostderr = true;
-			loguru::add_file("debug.log", loguru::Append, loguru::Verbosity_MAX);
-		} else		
-			loguru::add_file("debug.log", loguru::Append, loguru::Verbosity_INFO);
-
+		
 		FPCFilter::Pipeline pipeline(parameters.input);
 
 		if (parameters.isCropRequested)
