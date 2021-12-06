@@ -16,9 +16,13 @@ int main(const int argc, char** argv)
         std::cout << "?> Parameters:" << std::endl;
         std::cout << "\tinput = " << parameters.input << std::endl;
         std::cout << "\toutput = " << parameters.output << std::endl;
-        std::cout << "\tstd = " << std::setprecision(4) << parameters.std << std::endl;
-		std::cout << "\tradius = " << std::setprecision(4) << parameters.radius << std::endl;
-		std::cout << "\tmeanK = " << parameters.meank << std::endl;
+
+		if (parameters.std.has_value())
+			std::cout << "\tstd = " << std::setprecision(4) << parameters.std.value() << std::endl;
+		if (parameters.radius.has_value())
+			std::cout << "\tradius = " << std::setprecision(4) << parameters.radius.value() << std::endl;
+		if (parameters.meank.has_value())
+			std::cout << "\tmeanK = " << parameters.meank.value() << std::endl;
 
 		if (parameters.boundary.has_value()) 
 			std::cout << "\tboundary = " << parameters.boundary.value().getPoints().size() << " polygon vertexes" << std::endl;		
@@ -48,7 +52,7 @@ int main(const int argc, char** argv)
 
 			std::cout << std::endl << " -> Sampling ";
 
-			pipeline.sample(parameters.radius);
+			pipeline.sample(parameters.radius.value());
 
 			std::cout << "OK" << std::endl;
 
@@ -61,7 +65,7 @@ int main(const int argc, char** argv)
 
 			std::cout << std::endl << " -> Statistical filtering ";
 
-			pipeline.filter(parameters.std, parameters.meank);
+			pipeline.filter(parameters.std.value(), parameters.meank.value());
 
 			std::cout << "OK" << std::endl;
 

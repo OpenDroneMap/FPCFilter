@@ -57,15 +57,19 @@ namespace FPCFilter
 	public:
 		std::string input;
 		std::string output;
+		
+		bool isCropRequested = false;
 		std::optional<Polygon> boundary;
-		double std;
-		double radius;
+		
+		bool isFilterRequested = false;
+		std::optional<double> std;
+		std::optional<int> meank;
+
+		bool isSampleRequested = false;
+		std::optional<double> radius;
+		
 		int concurrency;
 		bool verbose;
-		int meank;
-		bool isCropRequested = false;;
-		bool isSampleRequested = false;
-		bool isFilterRequested = false;
 
 		Parameters(const int argc, char** argv)
 		{
@@ -77,12 +81,12 @@ namespace FPCFilter
 			options.add_options()
 				("i,input", "Input point cloud", cxxopts::value<std::string>())
 				("o,output", "Output point cloud", cxxopts::value<std::string>())
-				("b,boundary", "Crop boundary (GeoJSON POLYGON)", cxxopts::value<std::string>()->default_value(""))
-				("s,std", "Standard deviation threshold", cxxopts::value<double>()->default_value(DEFAULT_STD_DEV))
-				("m,meank", "Mean number of neighbors", cxxopts::value<int>()->default_value(DEFAULT_MEANK))
-				("r,radius", "Sample radius", cxxopts::value<double>()->default_value(DEFAULT_SAMPLE_RADIUS))
-				("c,concurrency", "Max concurrency", cxxopts::value<int>()->default_value("0"))
-				("v,verbose", "Verbose output", cxxopts::value<bool>()->default_value(DEFAULT_VERBOSE));
+				("b,boundary", "Crop boundary (GeoJSON POLYGON)", cxxopts::value<std::string>())
+				("s,std", "Standard deviation threshold", cxxopts::value<double>())
+				("m,meank", "Mean number of neighbors", cxxopts::value<int>())
+				("r,radius", "Sample radius", cxxopts::value<double>())
+				("c,concurrency", "Max concurrency", cxxopts::value<int>())
+				("v,verbose", "Verbose output", cxxopts::value<bool>());
 
 			options.parse_positional({ "input", "output" });
 
@@ -104,38 +108,48 @@ namespace FPCFilter
 			if (output.empty())
 				throw std::invalid_argument("Output file is empty");
 
-			std = result["std"].as<double>();
+			if (result.count("std") && result.count("meank")) {
 
-			if (std < 0)
-				throw std::invalid_argument("Standard deviation threshold cannot be less than 0");
+				std = result["std"].as<double>();
 
-			meank = result["meank"].as<int>();
+				if (std < 0)
+					throw std::invalid_argument("Standard deviation threshold cannot be less than 0");
 
-			if (meank < 1)
-				throw std::invalid_argument("Mean number of neighbors cannot be less than 1");
+				meank = result["meank"].as<int>();
 
-			isFilterRequested = true;
+				if (meank < 1)
+					throw std::invalid_argument("Mean number of neighbors cannot be less than 1");
 
-			radius = result["radius"].as<double>();
+				isFilterRequested = true;
+			}
 
-			if (radius < 0)
-				throw std::invalid_argument("Sample radius cannot be less than 0");
+			if (result.count("radius")) {
 
-			isSampleRequested = radius != 0;
+				radius = result["radius"].as<double>();
 
-			concurrency = result["concurrency"].as<int>();
+				if (radius < 0)
+					throw std::invalid_argument("Sample radius cannot be less than 0");
 
-			if (concurrency == 0)
+				isSampleRequested = true;
+
+			}
+			
+			if (result.count("concurrency")) {
+
+				concurrency = result["concurrency"].as<int>();
+
+				if (concurrency < 1)
+					throw std::invalid_argument("Concurrency cannot be less than 1");
+				
+			} else 
 				concurrency = std::max(omp_get_num_procs(), 1);
-			else if (concurrency < 0)
-				throw std::invalid_argument("Concurrency cannot be less than 0");
+			
 
-			verbose = result["verbose"].as<bool>();
+			verbose = result.count("verbose") != 0;
 
-			const auto boundaryFile = result["boundary"].as<std::string>();
+			if (result.count("boundary")) {
 
-			if (!boundaryFile.empty())
-			{
+				const auto boundaryFile = result["boundary"].as<std::string>();
 
 				boundary = extractPolygon(boundaryFile);
 
@@ -143,7 +157,7 @@ namespace FPCFilter
 					throw std::invalid_argument(string_format("Boundary file '{}' does not contain a valid GeoJSON POLYGON", boundaryFile));
 
 				isCropRequested = true;
-
+				
 			}
 
 		}
