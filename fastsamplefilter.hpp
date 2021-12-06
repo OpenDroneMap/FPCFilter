@@ -61,8 +61,6 @@ namespace FPCFilter {
                 std::vector<PlyPoint> tmpPoints;
                 std::vector<PlyExtra> tmpExtras;
 
-                #define OMP_NUM_THREADS 1
-
                 #pragma omp parallel private (tmpPoints, tmpExtras)
                 {
                     #pragma omp for
