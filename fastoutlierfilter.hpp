@@ -57,12 +57,12 @@ namespace FPCFilter {
         double m_multiplier;
         int m_meanK;
 
+        bool isVerbose;
+
         std::unique_ptr<KDTree> tree;
 
     public:
-        FastOutlierFilter(double std, int meanK) {
-            m_multiplier = std;
-            m_meanK = meanK;
+        FastOutlierFilter(double std, int meanK, bool isVerbose) : m_multiplier(std), m_meanK(meanK), isVerbose(isVerbose) {
         }
 
         void knnSearch(PlyPoint& point, size_t k,
@@ -98,7 +98,7 @@ namespace FPCFilter {
 
             // we increase the count by one because the query point itself will
             // be included with a distance of 0
-            size_t count = m_meanK + 1;
+            size_t count = (size_t)m_meanK + 1;
             std::vector<size_t> indices(count);
             std::vector<double> sqr_dists(count);
             for (size_t i = 0; i < np; ++i)

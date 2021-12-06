@@ -32,52 +32,76 @@ int main(const int argc, char** argv)
         std::cout << "\tconcurrency = " << parameters.concurrency << std::endl;
         std::cout << "\tverbose = " << (parameters.verbose ? "yes" : "no") << std::endl;
 		std::cout << std::endl;
-		
-		FPCFilter::Pipeline pipeline(parameters.input);
+
+		const auto pipelineStart = std::chrono::steady_clock::now();
+
+		FPCFilter::Pipeline pipeline(parameters.input, parameters.verbose);
 
 		if (parameters.isCropRequested)
 		{
 
-			std::cout << std::endl << " -> Cropping ";
+			std::cout << std::endl << " -> Cropping" << std::endl;
+
+			const auto start = std::chrono::steady_clock::now();
 
 			pipeline.crop(parameters.boundary.value());
 
-			std::cout << "OK" << std::endl;
+			const std::chrono::duration<double> diff = std::chrono::steady_clock::now() - start;
+
+			std::cout << " -> Done cropping in " << diff.count() << "s" << std::endl;
 
 		} else		
-			std::cout << std::endl << " -> Skipping crop" << std::endl;
+			std::cout << std::endl << " ?> Skipping crop" << std::endl;
 		
 		if (parameters.isSampleRequested)
 		{
 
-			std::cout << std::endl << " -> Sampling ";
+			std::cout << std::endl << " -> Sampling" << std::endl;
+
+			const auto start = std::chrono::steady_clock::now();
 
 			pipeline.sample(parameters.radius.value());
 
-			std::cout << "OK" << std::endl;
+			const std::chrono::duration<double> diff = std::chrono::steady_clock::now() - start;
+
+			std::cout << " ?> Done in " << diff.count() << "s" << std::endl;
 
 		}
 		else		
-			std::cout << std::endl << " -> Skipping sampling" << std::endl;
+			std::cout << std::endl << " ?> Skipping sampling" << std::endl;
 		
 		if (parameters.isFilterRequested)
 		{
 
-			std::cout << std::endl << " -> Statistical filtering ";
+			std::cout << std::endl << " -> Statistical filtering" << std::endl;
+
+			const auto start = std::chrono::steady_clock::now();
 
 			pipeline.filter(parameters.std.value(), parameters.meank.value());
 
-			std::cout << "OK" << std::endl;
+			const std::chrono::duration<double> diff = std::chrono::steady_clock::now() - start;
+
+			std::cout << " ?> Done in " << diff.count() << "s" << std::endl;
 
 		}
 		else		
-			std::cout << std::endl << " -> Skipping statistical filtering" << std::endl;
-		
-		std::cout << std::endl << " -> Writing output ";
+			std::cout << std::endl << " ?> Skipping statistical filtering" << std::endl;
 
-		pipeline.write(parameters.output);
+		{
+			std::cout << std::endl << " -> Writing output" << std::endl;
 
-		std::cout << "OK" << std::endl;
+			const auto start = std::chrono::steady_clock::now();
+
+			pipeline.write(parameters.output);
+
+			const std::chrono::duration<double> diff = std::chrono::steady_clock::now() - start;
+
+			std::cout << " ?> Done in " << diff.count() << "s" << std::endl;
+		}
+
+		const std::chrono::duration<double> pipelineDiff = std::chrono::steady_clock::now() - pipelineStart;
+
+		std::cout << std::endl << " ?> Pipeline done in " << pipelineDiff.count() << "s" << std::endl << std::endl;
 
 	}
 	catch(const std::invalid_argument& e) {

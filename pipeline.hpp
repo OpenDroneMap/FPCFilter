@@ -28,9 +28,10 @@ namespace FPCFilter
 
 		std::string source;
 		bool isLoaded = false;
+		bool isVerbose = false;
 
 	public:
-		Pipeline(const std::string &source) : source(source) {}
+		Pipeline(const std::string &source, const bool verbose) : source(source), isVerbose(verbose) {}
 
 		void load()
 		{
@@ -61,7 +62,7 @@ namespace FPCFilter
 			if (!this->isLoaded)
 				this->load();
 
-			FastSampleFilter filter(radius);
+			FastSampleFilter filter(radius, this->isVerbose);
 
 			filter.run(*this->ply);
 		}
@@ -71,7 +72,7 @@ namespace FPCFilter
 			if (!this->isLoaded)
 				this->load();
 
-			FastOutlierFilter filter(std, meank);
+			FastOutlierFilter filter(std, meank, this->isVerbose);
 
 			filter.run(*this->ply);
 		}
