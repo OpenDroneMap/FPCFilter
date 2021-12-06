@@ -123,7 +123,7 @@ TEST(Pipeline, Load) {
 
 	const auto path = ta.downloadTestAsset(ASCII_PLY, "ascii.ply");
 
-	FPCFilter::Pipeline pipeline(path.generic_string(), true);
+	FPCFilter::Pipeline pipeline(path.generic_string(), std::cout, true);
 
 	pipeline.load();
 
