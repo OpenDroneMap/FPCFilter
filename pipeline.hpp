@@ -26,12 +26,14 @@ namespace FPCFilter
 
 		std::unique_ptr<PlyFile> ply;
 
+		std::ostream& log;
+
 		std::string source;
 		bool isLoaded = false;
 		bool isVerbose = false;
 
 	public:
-		Pipeline(const std::string &source, const bool verbose) : source(source), isVerbose(verbose) {}
+		Pipeline(const std::string &source, std::ostream& logstream, const bool verbose) : source(source), isVerbose(verbose), log(logstream) {}
 
 		void load()
 		{
@@ -39,6 +41,10 @@ namespace FPCFilter
 			this->ply = std::make_unique<PlyFile>(this->source);
 
 			this->isLoaded = true;
+
+			if (this->isVerbose)
+				log << " ?> Point cloud has " << this->ply->points.size() << " points total" << std::endl;			
+
 		}
 
 		void crop(const Polygon &p)
@@ -51,6 +57,9 @@ namespace FPCFilter
 
 				this->isLoaded = true;
 
+				if (this->isVerbose)
+					log << " ?> Cropped point cloud has " << this->ply->points.size() << " points " << std::endl;			
+
 				return;
 			}
 
@@ -62,7 +71,7 @@ namespace FPCFilter
 			if (!this->isLoaded)
 				this->load();
 
-			FastSampleFilter filter(radius, this->isVerbose);
+			FastSampleFilter filter(radius, this->log, this->isVerbose);
 
 			filter.run(*this->ply);
 		}
@@ -72,7 +81,7 @@ namespace FPCFilter
 			if (!this->isLoaded)
 				this->load();
 
-			FastOutlierFilter filter(std, meank, this->isVerbose);
+			FastOutlierFilter filter(std, meank, this->log, this->isVerbose);
 
 			filter.run(*this->ply);
 		}

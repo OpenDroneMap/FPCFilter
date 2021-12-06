@@ -57,13 +57,14 @@ namespace FPCFilter {
         double m_multiplier;
         int m_meanK;
 
+        std::ostream& log;
         bool isVerbose;
 
         std::unique_ptr<KDTree> tree;
 
     public:
-        FastOutlierFilter(double std, int meanK, bool isVerbose) : m_multiplier(std), m_meanK(meanK), isVerbose(isVerbose) {
-        }
+        FastOutlierFilter(double std, int meanK, std::ostream &logstream, bool isVerbose) : 
+            m_multiplier(std), m_meanK(meanK), isVerbose(isVerbose), log(logstream) {}
 
         void knnSearch(PlyPoint& point, size_t k,
             std::vector<size_t>& indices, std::vector<double>& sqr_dists) const

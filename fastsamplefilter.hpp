@@ -16,20 +16,24 @@ namespace FPCFilter {
         using Coord = PointXYZ<double>;
         using CoordList = std::vector<Coord>;
 
-        double m_cell;
-        double m_radius;
-        double m_radiusSqr;
-        double m_originX;
-        double m_originY;
-        double m_originZ;
+        std::ostream& log;
+
+        std::map<Voxel, CoordList> voxels;
+
+        double cell;
+        double radius;
+        double radiusSqr;
+        double originX;
+        double originY;
+        double originZ;
 
         bool isVerbose;
 
     public:
-        FastSampleFilter(double radius, bool isVerbose) : m_originX(0), m_originY(0), m_originZ(0), isVerbose(isVerbose) {
-            m_radius = radius;
-            m_radiusSqr = radius * radius;
-            m_cell = 2.0 * m_radius / std::sqrt(3.0);
+        FastSampleFilter(double radius, std::ostream& logstream, bool isVerbose) : originX(0), originY(0), originZ(0), 
+                isVerbose(isVerbose), log(logstream), radius(radius), radiusSqr(radius * radius) {
+
+            cell = 2.0 * radius / std::sqrt(3.0);
         }
 
         void run(PlyFile& file) {
@@ -44,11 +48,9 @@ namespace FPCFilter {
             
             const auto hasNormals = file.hasNormals();
 
-            m_originX = points[0].x;
-            m_originY = points[0].y;
-            m_originZ = points[0].z;
-
-            std::map<Voxel, CoordList> voxels;
+            originX = points[0].x;
+            originY = points[0].y;
+            originZ = points[0].z;
 
             if (hasNormals) {
 
@@ -59,7 +61,9 @@ namespace FPCFilter {
                 newExtras.reserve(cnt);
 
                 std::vector<PlyPoint> tmpPoints;
+                tmpPoints.reserve(cnt / omp_get_max_threads());
                 std::vector<PlyExtra> tmpExtras;
+                tmpExtras.reserve(cnt / omp_get_max_threads());
 
                 #pragma omp parallel private (tmpPoints, tmpExtras)
                 {
@@ -69,7 +73,7 @@ namespace FPCFilter {
                         const auto& point = points[n];
                         const auto& extra = extras[n];
 
-                        if (this->safe_voxelize(voxels, point)) {
+                        if (this->safe_voxelize(point)) {
                             tmpPoints.push_back(point);
                             tmpExtras.push_back(extra);
                         }
@@ -78,12 +82,11 @@ namespace FPCFilter {
                     #pragma omp critical
                     {
                         if (this->isVerbose)
-                            std::cout << " ?> Merging thread " << omp_get_thread_num() << " got " << tmpPoints.size() << " points" << std::endl;
+                            log << " ?> Sampled " << tmpPoints.size() << " points in thread " << omp_get_thread_num() << std::endl;
 
                         newPoints.insert(newPoints.end(), tmpPoints.begin(), tmpPoints.end());
                         newExtras.insert(newExtras.end(), tmpExtras.begin(), tmpExtras.end());
                     }
-
                 }
 
                 newPoints.shrink_to_fit();
@@ -94,7 +97,7 @@ namespace FPCFilter {
 
             } else {
 
-                auto res = std::remove_if(points.begin(), points.end(), [this, &voxels](PlyPoint& point) { return !this->safe_voxelize(voxels, point); });
+                auto res = std::remove_if(points.begin(), points.end(), [this](PlyPoint& point) { return !this->safe_voxelize(point); });
                 points.erase(res, points.end());
                 
             }
@@ -108,16 +111,16 @@ namespace FPCFilter {
             return i - ( i > x ); /* convert trunc to floor */
         }
 
-        bool safe_voxelize(std::map<Voxel, CoordList>& voxels, const PlyPoint& point) {
+        bool safe_voxelize(const PlyPoint& point) {
 
             double x = point.x;
             double y = point.y;
             double z = point.z;
 
             // Get voxel indices for current point.
-            auto v = Voxel(fast_floor((x - m_originX) / m_cell), 
-                           fast_floor((y - m_originY) / m_cell), 
-                           fast_floor((z - m_originZ) / m_cell));
+            auto v = Voxel(fast_floor((x - originX) / cell), 
+                           fast_floor((y - originY) / cell), 
+                           fast_floor((z - originZ) / cell));
 
             // Check current voxel before any of the neighbors. We will most often have
             // points that are too close in the point's enclosing voxel, thus saving
@@ -139,7 +142,7 @@ namespace FPCFilter {
                     // If any point is closer than the minimum radius, we can
                     // immediately return false, as the minimum distance
                     // criterion is violated.
-                    if (distSqr < m_radiusSqr)
+                    if (distSqr < radiusSqr)
                         return false;
                 }
             }
@@ -159,8 +162,7 @@ namespace FPCFilter {
                             continue;
 
                         // Check that candidate voxel is occupied.
-                        if (voxels.find(candidate) ==
-                            voxels.end())
+                        if (voxels.find(candidate) == voxels.end())
                             continue;
 
                         // Get list of coordinates in candidate voxel.
@@ -178,7 +180,7 @@ namespace FPCFilter {
                             // If any point is closer than the minimum radius, we can
                             // immediately return false, as the minimum distance
                             // criterion is violated.
-                            if (distSqr < m_radiusSqr)
+                            if (distSqr < radiusSqr)
                                 return false;
                         }
                     }

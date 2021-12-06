@@ -33,14 +33,17 @@ int main(const int argc, char** argv)
         std::cout << "\tverbose = " << (parameters.verbose ? "yes" : "no") << std::endl;
 		std::cout << std::endl;
 
+		std::cout << " -> Setting num_threads to " << parameters.concurrency << std::endl;
+		omp_set_num_threads(parameters.concurrency);
+
 		const auto pipelineStart = std::chrono::steady_clock::now();
 
-		FPCFilter::Pipeline pipeline(parameters.input, parameters.verbose);
+		FPCFilter::Pipeline pipeline(parameters.input, std::cout, parameters.verbose);
 
 		if (parameters.isCropRequested)
 		{
 
-			std::cout << std::endl << " -> Cropping" << std::endl;
+			std::cout << std::endl << " -> Cropping" << std::endl << std::endl;;
 
 			const auto start = std::chrono::steady_clock::now();
 
@@ -56,7 +59,7 @@ int main(const int argc, char** argv)
 		if (parameters.isSampleRequested)
 		{
 
-			std::cout << std::endl << " -> Sampling" << std::endl;
+			std::cout << std::endl << " -> Sampling" << std::endl << std::endl;
 
 			const auto start = std::chrono::steady_clock::now();
 
@@ -73,7 +76,7 @@ int main(const int argc, char** argv)
 		if (parameters.isFilterRequested)
 		{
 
-			std::cout << std::endl << " -> Statistical filtering" << std::endl;
+			std::cout << std::endl << " -> Statistical filtering" << std::endl << std::endl;;
 
 			const auto start = std::chrono::steady_clock::now();
 
@@ -88,7 +91,7 @@ int main(const int argc, char** argv)
 			std::cout << std::endl << " ?> Skipping statistical filtering" << std::endl;
 
 		{
-			std::cout << std::endl << " -> Writing output" << std::endl;
+			std::cout << std::endl << " -> Writing output" << std::endl << std::endl;
 
 			const auto start = std::chrono::steady_clock::now();
 
