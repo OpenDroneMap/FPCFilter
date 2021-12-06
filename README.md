@@ -12,7 +12,7 @@ Requirements:
 git clone https://github.com/OpenDroneMap/FPCFilter.git
 cd FPCFilter
 mkdir build && cd build
-cmake .. && make
+cmake -DCMAKE_BUILD_TYPE=Release .. && make -j8
 ```
 
 On Windows you should install Visual Studio (the free Community Edition works great), Git and CMake. Then:
