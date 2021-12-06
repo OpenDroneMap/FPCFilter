@@ -83,6 +83,12 @@ namespace FPCFilter {
 
         std::map<Voxel, CoordList> m_populatedVoxels;
 
+        inline int fast_floor(double x)
+        {
+            int i = (int)x; /* truncate */
+            return i - ( i > x ); /* convert trunc to floor */
+        }
+
         bool voxelize(const PlyPoint& point) {
 
             double x = point.x;
@@ -90,9 +96,9 @@ namespace FPCFilter {
             double z = point.z;
 
             // Get voxel indices for current point.
-            auto v = Voxel((int)(std::floor((x - m_originX) / m_cell)), 
-                              (int)(std::floor((y - m_originY) / m_cell)), 
-                              (int)(std::floor((z - m_originZ) / m_cell)));
+            auto v = Voxel(fast_floor((x - m_originX) / m_cell), 
+                           fast_floor((y - m_originY) / m_cell), 
+                           fast_floor((z - m_originZ) / m_cell));
 
             // Check current voxel before any of the neighbors. We will most often have
             // points that are too close in the point's enclosing voxel, thus saving
