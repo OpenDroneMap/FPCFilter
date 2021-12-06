@@ -48,13 +48,12 @@ namespace FPCFilter {
                 std::vector<PlyExtra> newExtras;
                 newExtras.reserve(cnt);
 
-                #pragma opm parallel
+                std::vector<PlyPoint> tmpPoints;
+                std::vector<PlyExtra> tmpExtras;
+
+                #pragma omp parallel private (tmpPoints, tmpExtras)
                 {
-
-                    std::vector<PlyPoint> tmpPoints;
-                    std::vector<PlyExtra> tmpExtras;
-
-                    #pragma omp for private(voxels, tmpPoints, tmpExtras)
+                    #pragma omp for
                     for (auto n = 0; n < cnt; n++) {
 
                         const auto& point = points[n];
@@ -181,17 +180,21 @@ namespace FPCFilter {
                 }
             }
 
-            auto coord = Coord(x, y, z);
-            if (voxels.find(v) != voxels.end())
+            #pragma omp critical 
             {
-                voxels[v].push_back(coord);
+                auto coord = Coord(x, y, z);
+                if (voxels.find(v) != voxels.end())
+                {
+                    voxels[v].push_back(coord);
+                }
+                else
+                {
+                    CoordList coords;
+                    coords.push_back(coord);
+                    voxels.emplace(v, coords);
+                }
             }
-            else
-            {
-                CoordList coords;
-                coords.push_back(coord);
-                voxels.emplace(v, coords);
-            }
+
             return true;
         }
 
