@@ -81,6 +81,21 @@
         "csignal": "cpp",
         "deque": "cpp",
         "set": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "cwctype": "cpp",
+        "strstream": "cpp",
+        "*.tcc": "cpp",
+        "bitset": "cpp",
+        "cinttypes": "cpp",
+        "codecvt": "cpp",
+        "complex": "cpp",
+        "memory_resource": "cpp",
+        "random": "cpp",
+        "string_view": "cpp",
+        "future": "cpp",
+        "ranges": "cpp",
+        "shared_mutex": "cpp",
+        "cfenv": "cpp",
+        "typeindex": "cpp"
     }
 }
