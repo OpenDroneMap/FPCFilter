@@ -72,11 +72,9 @@ namespace FPCFilter {
 
             resultSet.init(&indices.front(), &sqr_dists.front());
 
-            std::vector<double> pt;
-            pt.push_back(point.x);
-            pt.push_back(point.y);
-            pt.push_back(point.z);
+            std::array<double, 3> pt = {point.x, point.y, point.z};
             tree->findNeighbors(resultSet, &pt[0], nanoflann::SearchParams(10));
+
         }
 
         void run(PlyFile& file) {
