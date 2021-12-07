@@ -1,0 +1,3 @@
+// the configured options and settings for Tutorial
+#define FPCFilter_VERSION_MAJOR @FPCFilter_VERSION_MAJOR@
+#define FPCFilter_VERSION_MINOR @FPCFilter_VERSION_MINOR@
