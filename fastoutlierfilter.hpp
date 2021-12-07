@@ -54,17 +54,19 @@ namespace FPCFilter {
         typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<
             double, PointCloud, double>, PointCloud, -1, std::size_t> KDTree;
 
-        double m_multiplier;
-        int m_meanK;
+        double multiplier;
+        int meanK;
 
         std::ostream& log;
         bool isVerbose;
 
         std::unique_ptr<KDTree> tree;
 
+        const nanoflann::SearchParams params;
+
     public:
         FastOutlierFilter(double std, int meanK, std::ostream &logstream, bool isVerbose) : 
-            m_multiplier(std), m_meanK(meanK), isVerbose(isVerbose), log(logstream) {}
+            multiplier(std), meanK(meanK), isVerbose(isVerbose), log(logstream), params(nanoflann::SearchParams(10)) {}
 
         void knnSearch(PlyPoint& point, size_t k,
             std::vector<size_t>& indices, std::vector<double>& sqr_dists) const
@@ -74,7 +76,7 @@ namespace FPCFilter {
             resultSet.init(&indices.front(), &sqr_dists.front());
 
             std::array<double, 3> pt = {point.x, point.y, point.z};
-            tree->findNeighbors(resultSet, &pt[0], nanoflann::SearchParams(10));
+            tree->findNeighbors(resultSet, &pt[0], this->params);
 
         }
 
@@ -82,8 +84,15 @@ namespace FPCFilter {
 
             PointCloud pointCloud(file.points);
 
+            auto start = std::chrono::steady_clock::now();
+
             tree = std::make_unique<KDTree>(3, pointCloud, nanoflann::KDTreeSingleIndexAdaptorParams(100));
             tree->buildIndex();
+
+            if (this->isVerbose) {
+                const std::chrono::duration<double> diff = std::chrono::steady_clock::now() - start;
+                std::cout << " ?> Done building index in " << diff.count() << "s" << std::endl;
+            }
 
             size_t np = file.points.size();
 
@@ -94,30 +103,50 @@ namespace FPCFilter {
             newExtras.reserve(np);
 
             std::vector<size_t> inliers, outliers;
-
             std::vector<double> distances(np, 0.0);
 
             // we increase the count by one because the query point itself will
             // be included with a distance of 0
-            size_t count = (size_t)m_meanK + 1;
-            std::vector<size_t> indices(count);
-            std::vector<double> sqr_dists(count);
-            for (size_t i = 0; i < np; ++i)
-            {
-                knnSearch(file.points[i], count, indices, sqr_dists);
+            size_t count = (size_t)meanK + 1;
 
-                for (size_t j = 1; j < count; ++j)
+            std::vector<size_t> indices;
+            std::vector<double> sqr_dists;
+
+            start = std::chrono::steady_clock::now();
+
+            #pragma omp parallel private (indices, sqr_dists)
+            {
+                indices.resize(count);
+                sqr_dists.resize(count);
+
+                // We are using 'long long' instead of size_t (unsigned long long) because OpenMP parallel for needs a signed index
+
+                #pragma omp for
+                for (long long i = 0; i < np; ++i)
                 {
-                    double delta = std::sqrt(sqr_dists[j]) - distances[i];
-                    distances[i] += (delta / j);
+                    knnSearch(file.points[i], count, indices, sqr_dists);
+
+                    for (size_t j = 1; j < count; ++j)
+                    {
+                        double delta = std::sqrt(sqr_dists[j]) - distances[i];
+                        distances[i] += (delta / j);
+                    }
+                    indices.clear(); indices.resize(count);
+                    sqr_dists.clear(); sqr_dists.resize(count);
                 }
-                indices.clear(); indices.resize(count);
-                sqr_dists.clear(); sqr_dists.resize(count);
+            }
+
+            if (this->isVerbose) {
+                const std::chrono::duration<double> diff = std::chrono::steady_clock::now() - start;
+                std::cout << " ?> Done calculating point neighbors average distances in " << diff.count() << "s" << std::endl;
             }
 
             size_t n(0);
             double M1(0.0);
             double M2(0.0);
+
+            start = std::chrono::steady_clock::now();
+
             for (auto const& d : distances)
             {
                 size_t n1(n);
@@ -131,9 +160,17 @@ namespace FPCFilter {
             double variance = M2 / (n - 1.0);
             double stdev = std::sqrt(variance);
 
-            double threshold = mean + m_multiplier * stdev;
+            double threshold = mean + multiplier * stdev;
+
+            if (this->isVerbose) {
+                const std::chrono::duration<double> diff = std::chrono::steady_clock::now() - start;
+                std::cout << " ?> Done calculating cloud average distance " << diff.count() << "s" << std::endl;
+            }
 
             if (file.hasNormals()) {
+
+                start = std::chrono::steady_clock::now();
+
                 for (size_t i = 0; i < np; ++i)
                 {
                     if (distances[i] < threshold) {
@@ -153,8 +190,15 @@ namespace FPCFilter {
                 file.points = newPoints;
                 file.extras = newExtras;
 
+                if (this->isVerbose) {
+                    const std::chrono::duration<double> diff = std::chrono::steady_clock::now() - start;
+                    std::cout << " ?> Done filtering points in " << diff.count() << "s" << std::endl;
+                }
+
             }
             else {
+
+                start = std::chrono::steady_clock::now();
 
                 for (size_t i = 0; i < np; ++i)
                 {
@@ -168,6 +212,11 @@ namespace FPCFilter {
                 newPoints.shrink_to_fit();
 
                 file.points = newPoints;
+
+                if (this->isVerbose) {
+                    const std::chrono::duration<double> diff = std::chrono::steady_clock::now() - start;
+                    std::cout << " ?> Done filtering points in " << diff.count() << "s" << std::endl;
+                }
 
             }
             

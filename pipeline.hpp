@@ -37,14 +37,16 @@ namespace FPCFilter
 
 		void load()
 		{
+			const auto start = std::chrono::steady_clock::now();
 
 			this->ply = std::make_unique<PlyFile>(this->source);
 
 			this->isLoaded = true;
 
-			if (this->isVerbose)
-				log << " ?> Point cloud has " << this->ply->points.size() << " points total" << std::endl;			
-
+			if (this->isVerbose) {
+				const std::chrono::duration<double> diff = std::chrono::steady_clock::now() - start;
+				log << " ?> Loaded " << this->ply->points.size() << " points in " << diff.count() << "s" << std::endl;
+			}
 		}
 
 		void crop(const Polygon &p)
@@ -52,13 +54,17 @@ namespace FPCFilter
 
 			if (!this->isLoaded)
 			{
+				const auto start = std::chrono::steady_clock::now();
+
 				this->ply = std::make_unique<PlyFile>(this->source, [&p](const float x, const float y, const float z)
 													  { return p.inside(x, y); });
 
 				this->isLoaded = true;
 
-				if (this->isVerbose)
-					log << " ?> Cropped point cloud has " << this->ply->points.size() << " points " << std::endl;			
+				if (this->isVerbose) {
+					const std::chrono::duration<double> diff = std::chrono::steady_clock::now() - start;
+					log << " ?> Loaded " << this->ply->points.size() << " points (cropped) in " << diff.count() << "s" << std::endl;
+				}
 
 				return;
 			}
