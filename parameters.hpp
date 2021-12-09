@@ -101,7 +101,7 @@ namespace FPCFilter
 				throw std::invalid_argument("Input file is empty");
 
 			if (!fs::exists(input))
-				throw std::invalid_argument(string_format("Input file '{}' does not exist", input));
+				throw std::invalid_argument(string_format("Input file '%s' does not exist", input.c_str()));
 
 			output = result["output"].as<std::string>();
 
@@ -154,7 +154,7 @@ namespace FPCFilter
 				boundary = extractPolygon(boundaryFile);
 
 				if (!boundary.has_value())
-					throw std::invalid_argument(string_format("Boundary file '{}' does not contain a valid GeoJSON POLYGON", boundaryFile));
+					throw std::invalid_argument(string_format("Boundary file '%s' does not contain a valid GeoJSON POLYGON", boundaryFile.c_str()));
 
 				isCropRequested = true;
 				
