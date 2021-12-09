@@ -110,3 +110,21 @@ cmake --build . --config Release --target ALL_BUILD -- /maxcpucount:14
 ```
 
 In order to build the tests call cmake with `-DBUILD_TESTING=1` and `-DCMAKE_BUILD_TYPE=Debug`
+
+## Docker
+
+Build the image with:
+
+```bash
+docker build . -t opendronemap/fpcfilter
+```
+
+Run the container with:
+
+```bash
+docker run -it -v "${PWD}":/data --rm opendronemap/fpcfilter -i /data/input.ply -o /data/out.ply
+```
+
+`PWD` is the current directory, change it accordingly to your needs. 
+
+Use the image as the executable itself, call it without parameters to see the help.
