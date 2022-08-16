@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <filesystem>
+#include <vector>
 #include "FPCFilter.h"
 
 namespace FPCFilter {
