@@ -105,7 +105,7 @@ namespace FPCFilter {
             std::vector<double> sqr_dists;
             size_t SAMPLES = std::min<size_t>(np, 10000);
 
-            size_t count = 2;
+            size_t count = 3;
             std::vector<double> distances(SAMPLES, 0.0);
 
             std::unordered_map<uint64_t, size_t> dist_map;
