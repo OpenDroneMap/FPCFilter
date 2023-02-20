@@ -17,6 +17,9 @@ int main(const int argc, char** argv)
         std::cout << "\tinput = " << parameters.input << std::endl;
         std::cout << "\toutput = " << parameters.output << std::endl;
 
+		if (!parameters.stats.empty()) std::cout << "\tstats = " << parameters.stats << std::endl;
+		nlohmann::json stats = nlohmann::json::object();
+
 		if (parameters.std.has_value())
 			std::cout << "\tstd = " << std::setprecision(4) << parameters.std.value() << std::endl;
 		if (parameters.radius.has_value())
@@ -38,7 +41,7 @@ int main(const int argc, char** argv)
 
 		const auto pipelineStart = std::chrono::steady_clock::now();
 
-		FPCFilter::Pipeline pipeline(parameters.input, std::cout, parameters.verbose);
+		FPCFilter::Pipeline pipeline(parameters.input, std::cout, parameters.verbose, &stats);
 
 		if (parameters.isCropRequested)
 		{
@@ -106,6 +109,11 @@ int main(const int argc, char** argv)
 
 		std::cout << std::endl << " ?> Pipeline done in " << pipelineDiff.count() << "s" << std::endl << std::endl;
 
+		if (!parameters.stats.empty()){
+			std::ofstream o(parameters.stats);
+			o << stats;
+			o.close();
+		}
 	}
 	catch(const std::invalid_argument& e) {
 		std::cerr << e.what() << std::endl;

@@ -63,10 +63,11 @@ namespace FPCFilter {
         std::unique_ptr<KDTree> tree;
 
         const nanoflann::SearchParams params;
+        nlohmann::json *stats;
 
     public:
-        FastOutlierFilter(double std, int meanK, std::ostream &logstream, bool isVerbose) : 
-            multiplier(std), meanK(meanK), isVerbose(isVerbose), log(logstream), params(nanoflann::SearchParams(10)) {}
+        FastOutlierFilter(double std, int meanK, std::ostream &logstream, bool isVerbose, nlohmann::json *stats) : 
+            multiplier(std), meanK(meanK), isVerbose(isVerbose), log(logstream), params(nanoflann::SearchParams(10)), stats(stats) {}
 
         void knnSearch(PlyPoint& point, size_t k,
             std::vector<size_t>& indices, std::vector<double>& sqr_dists) const
@@ -219,6 +220,54 @@ namespace FPCFilter {
                 }
 
             }
+
+            // Compute neighbor mode distance over closest neighbors
+            // This could be part of a separate pipeline item
+
+            indices.clear();
+            sqr_dists.clear();
+            size_t SAMPLES = std::min<size_t>(np, 1000);
+
+            count = 3;
+            distances.clear();
+            distances.resize(SAMPLES);
+
+            std::vector<double> all_distances;
+            srand(1);
+
+            #pragma omp parallel private (indices, sqr_dists)
+            {
+                indices.resize(count);
+                sqr_dists.resize(count);
+
+                #pragma omp for
+                for (long long i = 0; i < SAMPLES; ++i)
+                {
+                    const size_t idx = rand() % SAMPLES;
+                    knnSearch(file.points[idx], count, indices, sqr_dists);
+
+                    double sum = 0.0;
+                    for (size_t j = 1; j < count; ++j)
+                    {
+                        sum += std::sqrt(sqr_dists[j]);
+                    }
+                    sum /= count;
+
+                    #pragma omp critical
+                    {
+                        all_distances.push_back(sum);
+                    }
+                    indices.clear(); indices.resize(count);
+                    sqr_dists.clear(); sqr_dists.resize(count);
+                }
+            }
+
+            std::sort(all_distances.begin(), all_distances.end());
+            
+            double density = all_distances[static_cast<size_t>(all_distances.size() / 2)];
+            (*stats)["density"] = density;
+
+            std::cout << " ?> Density estimation completed (" << density << " meters)" << std::endl << std::endl;
             
         }
 

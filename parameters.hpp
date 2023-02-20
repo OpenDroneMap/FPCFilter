@@ -57,6 +57,7 @@ namespace FPCFilter
 	public:
 		std::string input;
 		std::string output;
+		std::string stats;
 		
 		bool isCropRequested = false;
 		std::optional<Polygon> boundary;
@@ -81,6 +82,7 @@ namespace FPCFilter
 			options.add_options()
 				("i,input", "Input point cloud", cxxopts::value<std::string>())
 				("o,output", "Output point cloud", cxxopts::value<std::string>())
+				("j,stats", "Output statistics file (JSON)", cxxopts::value<std::string>())
 				("b,boundary", "Crop boundary (GeoJSON POLYGON)", cxxopts::value<std::string>())
 				("s,std", "Standard deviation threshold", cxxopts::value<double>())
 				("m,meank", "Mean number of neighbors", cxxopts::value<int>())
@@ -107,6 +109,8 @@ namespace FPCFilter
 
 			if (output.empty())
 				throw std::invalid_argument("Output file is empty");
+
+			stats = result.count("stats") ? result["stats"].as<std::string>() : "";
 
 			if (result.count("std") && result.count("meank")) {
 
