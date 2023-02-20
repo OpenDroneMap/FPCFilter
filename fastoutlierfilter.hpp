@@ -98,6 +98,73 @@ namespace FPCFilter {
 
             size_t np = file.points.size();
 
+            // Compute neighbor median distance over closest neighbors
+            // This could be part of a separate pipeline item
+
+            std::vector<size_t> indices;
+            std::vector<double> sqr_dists;
+            size_t SAMPLES = std::min<size_t>(np, 10000);
+
+            size_t count = 2;
+            std::vector<double> distances(SAMPLES, 0.0);
+
+            std::unordered_map<uint64_t, size_t> dist_map;
+
+            std::vector<double> all_distances;
+            std::random_device rd;
+            std::mt19937_64 gen(rd());
+            std::uniform_int_distribution<size_t> randomDis(
+                0, np - 1
+            );
+
+            #pragma omp parallel private (indices, sqr_dists)
+            {
+                indices.resize(count);
+                sqr_dists.resize(count);
+
+                #pragma omp for
+                for (long long i = 0; i < SAMPLES; ++i)
+                {
+                    const size_t idx = randomDis(gen);
+                    knnSearch(file.points[idx], count, indices, sqr_dists);
+
+                    double sum = 0.0;
+                    for (size_t j = 1; j < count; ++j)
+                    {
+                        sum += std::sqrt(sqr_dists[j]);
+                    }
+                    sum /= count;
+
+                    #pragma omp critical
+                    {
+                        uint64_t k = std::ceil(sum * 100);
+                        if (dist_map.find(k) == dist_map.end()){
+                            dist_map[k] = 1;
+                        }else{
+                            dist_map[k] += 1;
+                        }
+                    }
+                    indices.clear(); indices.resize(count);
+                    sqr_dists.clear(); sqr_dists.resize(count);
+                }
+            }
+
+            uint64_t max_val = std::numeric_limits<uint64_t>::min();
+            int d = 0;
+            for (auto it : dist_map){
+                if (it.second > max_val){
+                    d = it.first;
+                    max_val = it.second;
+                }
+            }
+
+            double spacing = static_cast<double>(d) / 100.0;
+            (*stats)["spacing"] = spacing;
+
+            std::cout << " -> Spacing estimation completed (" << spacing << " meters)" << std::endl << std::endl;
+
+            // Outlier filtering
+
             std::vector<PlyPoint> newPoints;
             newPoints.reserve(np);
 
@@ -105,14 +172,14 @@ namespace FPCFilter {
             newExtras.reserve(np);
 
             std::vector<size_t> inliers, outliers;
-            std::vector<double> distances(np, 0.0);
+            distances.resize(np, 0.0);
 
             // we increase the count by one because the query point itself will
             // be included with a distance of 0
-            size_t count = (size_t)meanK + 1;
+            count = (size_t)meanK + 1;
 
-            std::vector<size_t> indices;
-            std::vector<double> sqr_dists;
+            indices.clear();
+            sqr_dists.clear();
 
             start = std::chrono::steady_clock::now();
 
@@ -221,72 +288,6 @@ namespace FPCFilter {
                 }
 
             }
-
-            // Compute neighbor median distance over closest neighbors
-            // This could be part of a separate pipeline item
-
-            indices.clear();
-            sqr_dists.clear();
-            size_t SAMPLES = std::min<size_t>(np, 10000);
-
-            count = 2;
-            distances.clear();
-            distances.resize(SAMPLES);
-            std::unordered_map<uint64_t, size_t> dist_map;
-
-            std::vector<double> all_distances;
-            std::random_device rd;
-            std::mt19937_64 gen(rd());
-            std::uniform_int_distribution<size_t> randomDis(
-                0, np - 1
-            );
-
-            #pragma omp parallel private (indices, sqr_dists)
-            {
-                indices.resize(count);
-                sqr_dists.resize(count);
-
-                #pragma omp for
-                for (long long i = 0; i < SAMPLES; ++i)
-                {
-                    const size_t idx = randomDis(gen);
-                    knnSearch(file.points[idx], count, indices, sqr_dists);
-
-                    double sum = 0.0;
-                    for (size_t j = 1; j < count; ++j)
-                    {
-                        sum += std::sqrt(sqr_dists[j]);
-                    }
-                    sum /= count;
-
-                    #pragma omp critical
-                    {
-                        uint64_t k = std::ceil(sum * 100);
-                        if (dist_map.find(k) == dist_map.end()){
-                            dist_map[k] = 1;
-                        }else{
-                            dist_map[k] += 1;
-                        }
-                    }
-                    indices.clear(); indices.resize(count);
-                    sqr_dists.clear(); sqr_dists.resize(count);
-                }
-            }
-
-            uint64_t max_val = std::numeric_limits<uint64_t>::min();
-            int d = 0;
-            for (auto it : dist_map){
-                if (it.second > max_val){
-                    d = it.first;
-                    max_val = it.second;
-                }
-            }
-
-            double spacing = static_cast<double>(d) / 100.0;
-            (*stats)["spacing"] = spacing;
-
-            std::cout << " -> Spacing estimation completed (" << spacing << " meters)" << std::endl << std::endl;
-            
         }
 
 
