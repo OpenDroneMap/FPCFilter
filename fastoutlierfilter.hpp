@@ -277,10 +277,10 @@ namespace FPCFilter {
                 }
             }
 
-            double density = static_cast<double>(d) / 100.0;
-            (*stats)["density"] = density;
+            double spacing = static_cast<double>(d) / 100.0;
+            (*stats)["spacing"] = spacing;
 
-            std::cout << " -> Density estimation completed (" << density << " meters)" << std::endl << std::endl;
+            std::cout << " -> Spacing estimation completed (" << spacing << " meters)" << std::endl << std::endl;
             
         }
 
