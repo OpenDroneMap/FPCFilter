@@ -4,6 +4,7 @@
 #include <map>
 #include <tuple>
 #include <vector>
+#include <random>
 
 #include "ply.hpp"
 #include "vendor/nanoflann.hpp"
@@ -231,10 +232,14 @@ namespace FPCFilter {
             count = 2;
             distances.clear();
             distances.resize(SAMPLES);
-            std::unordered_map<unsigned int, size_t> dist_map;
+            std::unordered_map<uint64_t, size_t> dist_map;
 
             std::vector<double> all_distances;
-            srand(1);
+            std::random_device rd;
+            std::mt19937_64 gen(rd());
+            std::uniform_int_distribution<size_t> randomDis(
+                0, np - 1
+            );
 
             #pragma omp parallel private (indices, sqr_dists)
             {
@@ -244,7 +249,7 @@ namespace FPCFilter {
                 #pragma omp for
                 for (long long i = 0; i < SAMPLES; ++i)
                 {
-                    const size_t idx = rand() % np;
+                    const size_t idx = randomDis(gen);
                     knnSearch(file.points[idx], count, indices, sqr_dists);
 
                     double sum = 0.0;
@@ -256,7 +261,7 @@ namespace FPCFilter {
 
                     #pragma omp critical
                     {
-                        unsigned int k = std::ceil(sum * 100);
+                        uint64_t k = std::ceil(sum * 100);
                         if (dist_map.find(k) == dist_map.end()){
                             dist_map[k] = 1;
                         }else{
@@ -268,7 +273,7 @@ namespace FPCFilter {
                 }
             }
 
-            unsigned int max_val = std::numeric_limits<unsigned int>::min();
+            uint64_t max_val = std::numeric_limits<uint64_t>::min();
             int d = 0;
             for (auto it : dist_map){
                 if (it.second > max_val){
