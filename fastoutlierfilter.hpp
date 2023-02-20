@@ -221,16 +221,17 @@ namespace FPCFilter {
 
             }
 
-            // Compute neighbor mode distance over closest neighbors
+            // Compute neighbor median distance over closest neighbors
             // This could be part of a separate pipeline item
 
             indices.clear();
             sqr_dists.clear();
-            size_t SAMPLES = std::min<size_t>(np, 1000);
+            size_t SAMPLES = std::min<size_t>(np, 10000);
 
-            count = 3;
+            count = 2;
             distances.clear();
             distances.resize(SAMPLES);
+            std::unordered_map<unsigned int, size_t> dist_map;
 
             std::vector<double> all_distances;
             srand(1);
@@ -243,7 +244,7 @@ namespace FPCFilter {
                 #pragma omp for
                 for (long long i = 0; i < SAMPLES; ++i)
                 {
-                    const size_t idx = rand() % SAMPLES;
+                    const size_t idx = rand() % np;
                     knnSearch(file.points[idx], count, indices, sqr_dists);
 
                     double sum = 0.0;
@@ -255,19 +256,31 @@ namespace FPCFilter {
 
                     #pragma omp critical
                     {
-                        all_distances.push_back(sum);
+                        unsigned int k = std::ceil(sum * 100);
+                        if (dist_map.find(k) == dist_map.end()){
+                            dist_map[k] = 1;
+                        }else{
+                            dist_map[k] += 1;
+                        }
                     }
                     indices.clear(); indices.resize(count);
                     sqr_dists.clear(); sqr_dists.resize(count);
                 }
             }
 
-            std::sort(all_distances.begin(), all_distances.end());
-            
-            double density = all_distances[static_cast<size_t>(all_distances.size() / 2)];
+            unsigned int max_val = std::numeric_limits<unsigned int>::min();
+            int d = 0;
+            for (auto it : dist_map){
+                if (it.second > max_val){
+                    d = it.first;
+                    max_val = it.second;
+                }
+            }
+
+            double density = static_cast<double>(d) / 100.0;
             (*stats)["density"] = density;
 
-            std::cout << " ?> Density estimation completed (" << density << " meters)" << std::endl << std::endl;
+            std::cout << " -> Density estimation completed (" << density << " meters)" << std::endl << std::endl;
             
         }
 
