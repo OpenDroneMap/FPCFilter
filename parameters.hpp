@@ -124,7 +124,7 @@ namespace FPCFilter
 				if (meank < 1)
 					throw std::invalid_argument("Mean number of neighbors cannot be less than 1");
 
-				isFilterRequested = true;
+				isFilterRequested = std > 0 && meank > 1;
 			}
 
 			if (result.count("radius")) {
