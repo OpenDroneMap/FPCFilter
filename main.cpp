@@ -26,6 +26,8 @@ int main(const int argc, char** argv)
 			std::cout << "\tradius = " << std::setprecision(4) << parameters.radius.value() << std::endl;
 		if (parameters.meank.has_value())
 			std::cout << "\tmeanK = " << parameters.meank.value() << std::endl;
+		if (parameters.zsmooth_radius.has_value())
+			std::cout << "\tZSmoothRadius = " << std::setprecision(4) << parameters.zsmooth_radius.value() << std::endl;
 
 		if (parameters.boundary.has_value()) 
 			std::cout << "\tboundary = " << parameters.boundary.value().getPoints().size() << " polygon vertexes" << std::endl;		
@@ -92,6 +94,21 @@ int main(const int argc, char** argv)
 		}
 		else		
 			std::cout << std::endl << " ?> Skipping statistical filtering" << std::endl;
+
+		if (parameters.isZSmoothRequested)
+		{
+			std::cout << std::endl << " -> Z smoothing" << std::endl << std::endl;;
+
+			const auto start = std::chrono::steady_clock::now();
+
+			pipeline.z_smooth(parameters.zsmooth_radius.value());
+
+			const std::chrono::duration<double> diff = std::chrono::steady_clock::now() - start;
+
+			std::cout << " ?> Done in " << diff.count() << "s" << std::endl;
+		} 
+		else
+			std::cout << std::endl << " ?> Skipping Z smoothing" << std::endl;
 
 		{
 			std::cout << std::endl << " -> Writing output" << std::endl << std::endl;

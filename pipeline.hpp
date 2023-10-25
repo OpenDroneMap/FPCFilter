@@ -15,6 +15,7 @@
 
 #include "fastsamplefilter.hpp"
 #include "fastoutlierfilter.hpp"
+#include "fastzmedianfilter.hpp"
 
 namespace fs = std::filesystem;
 
@@ -90,6 +91,16 @@ namespace FPCFilter
 				this->load();
 
 			FastOutlierFilter filter(std, meank, this->log, this->isVerbose, stats);
+
+			filter.run(*this->ply);
+		}
+
+		void z_smooth(double radius) 
+		{
+			if (!this->isLoaded)
+				this->load();
+
+			FastZMedianFilter filter(radius, this->log, this->isVerbose);
 
 			filter.run(*this->ply);
 		}
