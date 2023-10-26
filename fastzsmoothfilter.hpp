@@ -13,10 +13,13 @@
 #include "vendor/nanoflann.hpp"
 #include "utils.hpp"
 
+
+
 namespace FPCFilter {
-    class FastZMedianFilter {
+
+    class FastZSmoothFilter {
         typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<
-            double, PointCloud, double>, PointCloud, -1, std::size_t> KDTree;
+            double, PointCloud, double>, PointCloud, 3, std::size_t> KDTree;
 
         std::ostream& log;
         bool isVerbose;
@@ -28,7 +31,7 @@ namespace FPCFilter {
         const nanoflann::SearchParams params;
 
     public:
-        FastZMedianFilter(double radius, std::ostream& logstream, bool isVerbose) : radius(radius), log(logstream), isVerbose(isVerbose), params(10) {
+        FastZSmoothFilter(double radius, std::ostream& logstream, bool isVerbose) : radius(radius), log(logstream), isVerbose(isVerbose), params(10) {
         }
 
         void radiusSearch(PlyPoint& point, double radius, std::vector<size_t> &indices) const {
@@ -61,7 +64,7 @@ namespace FPCFilter {
             
             std::vector<double> newValuesZ(np);
 
-            // #pragma omp parallel for
+            #pragma omp parallel for
             for (auto n =0; n < np; n++) {
                 std::vector<size_t> indices;
                 PlyPoint& point = file.points[n];

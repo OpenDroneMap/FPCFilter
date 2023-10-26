@@ -69,11 +69,13 @@ namespace FPCFilter
 		bool isSampleRequested = false;
 		std::optional<double> radius;
 
-		bool isZSmoothRequested = false;
-		std::optional<double> zsmooth_radius;
+		bool isSmoothRequested = false;
+		std::optional<double> smooth_radius;
+		bool isSurfaceSmooth = false;
 		
 		int concurrency;
 		bool verbose;
+		
 
 		Parameters(const int argc, char** argv)
 		{
@@ -90,7 +92,8 @@ namespace FPCFilter
 				("s,std", "Standard deviation threshold", cxxopts::value<double>())
 				("m,meank", "Mean number of neighbors", cxxopts::value<int>())
 				("r,radius", "Sample radius", cxxopts::value<double>())
-				("z,zsmooth_radius", "Sample radius for z smooth", cxxopts::value<double>())
+				("smooth_radius", "Sample radius for smoothing", cxxopts::value<double>())
+				("smooth_surface", "Use surface smooth method, else z smooth", cxxopts::value<bool>())
 				("c,concurrency", "Max concurrency", cxxopts::value<int>())
 				("v,verbose", "Verbose output", cxxopts::value<bool>());
 
@@ -142,14 +145,16 @@ namespace FPCFilter
 
 			}
 
-			if (result.count("zsmooth_radius")) {
-				zsmooth_radius = result["zsmooth_radius"].as<double>();
+			if (result.count("smooth_radius")) {
+				smooth_radius = result["smooth_radius"].as<double>();
 
-				if (zsmooth_radius < 0)
+				if (smooth_radius < 0)
 					 throw std::invalid_argument("Sample radius cannot be less than 0");
 				
-				isZSmoothRequested = true;
+				isSmoothRequested = true;
+				isSurfaceSmooth = result.count("smooth_surface") != 0;
 			}
+
 			
 			if (result.count("concurrency")) {
 
