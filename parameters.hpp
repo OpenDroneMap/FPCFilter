@@ -92,7 +92,6 @@ namespace FPCFilter
 				("m,meank", "Mean number of neighbors", cxxopts::value<int>())
 				("r,radius", "Sample radius", cxxopts::value<double>())
 				("smooth_radius", "Sample radius for smoothing", cxxopts::value<double>())
-				("smooth_surface", "Use surface smooth method, else z smooth", cxxopts::value<bool>())
 				("c,concurrency", "Max concurrency", cxxopts::value<int>())
 				("v,verbose", "Verbose output", cxxopts::value<bool>());
 
