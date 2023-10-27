@@ -26,13 +26,8 @@ int main(const int argc, char** argv)
 			std::cout << "\tradius = " << std::setprecision(4) << parameters.radius.value() << std::endl;
 		if (parameters.meank.has_value())
 			std::cout << "\tmeanK = " << parameters.meank.value() << std::endl;
-		if (parameters.smooth_radius.has_value()) {
+		if (parameters.smooth_radius.has_value()) 
 			std::cout << "\tSmoothRadius = " << std::setprecision(4) << parameters.smooth_radius.value() << std::endl;
-			if (parameters.isSurfaceSmooth)
-				std::cout << "\tSmoothType = Surface" << std::endl;
-			else
-				std::cout << "\tSmoothType = Z" << std::endl;
-		}
 
 		if (parameters.boundary.has_value()) 
 			std::cout << "\tboundary = " << parameters.boundary.value().getPoints().size() << " polygon vertexes" << std::endl;		
@@ -106,7 +101,7 @@ int main(const int argc, char** argv)
 
 			const auto start = std::chrono::steady_clock::now();
 
-			pipeline.smooth(parameters.smooth_radius.value(), parameters.isSurfaceSmooth);
+			pipeline.smooth(parameters.smooth_radius.value());
 
 			const std::chrono::duration<double> diff = std::chrono::steady_clock::now() - start;
 

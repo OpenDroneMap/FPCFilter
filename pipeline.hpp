@@ -16,7 +16,6 @@
 #include "fastsamplefilter.hpp"
 #include "fastoutlierfilter.hpp"
 #include "fastzsmoothfilter.hpp"
-#include "fastsurfacesmoothfilter.hpp"
 
 namespace fs = std::filesystem;
 
@@ -96,19 +95,13 @@ namespace FPCFilter
 			filter.run(*this->ply);
 		}
 
-		void smooth(double radius, bool isSurface) 
+		void smooth(double radius) 
 		{
 			if (!this->isLoaded)
 				this->load();
 
-			if (!isSurface)
-			{
-				FastZSmoothFilter filter(radius, this->log, this->isVerbose);
-				filter.run(*this->ply);
-			} else {
-				FastSurfaceSmoothFilter filter(radius, 0.2, this->log, this->isVerbose);
-				filter.run(*this->ply);
-			}
+			FastZSmoothFilter filter(radius, this->log, this->isVerbose);
+			filter.run(*this->ply);
 		}
 
 		void write(const std::string &target)

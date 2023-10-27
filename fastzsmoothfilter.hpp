@@ -13,6 +13,7 @@
 #include "vendor/nanoflann.hpp"
 #include "utils.hpp"
 
+#define APPROX_HORIZON 0.98
 
 
 namespace FPCFilter {
@@ -63,18 +64,23 @@ namespace FPCFilter {
             }
             
             std::vector<double> newValuesZ(np);
-
             #pragma omp parallel for
             for (auto n =0; n < np; n++) {
                 std::vector<size_t> indices;
                 PlyPoint& point = file.points[n];
+                // only apply to points at near horizontal surfaces, approximated 11 degrees
+                if (file.extras[n].nz <= APPROX_HORIZON) {
+                    newValuesZ[n] = point.z;
+                    continue;
+                }
                 radiusSearch(point, radius, indices);
                 if (indices.empty()) {
+                    newValuesZ[n] = point.z;
                     continue;
                 }
                 newValuesZ[n] = z_median(pointCloud, indices);
             }
-            
+            #pragma omp parallel for
             for (auto n =0; n < np; n++) {
                 file.points[n].z = newValuesZ[n];
             }

@@ -71,8 +71,7 @@ namespace FPCFilter
 
 		bool isSmoothRequested = false;
 		std::optional<double> smooth_radius;
-		bool isSurfaceSmooth = false;
-		
+
 		int concurrency;
 		bool verbose;
 		
@@ -152,7 +151,6 @@ namespace FPCFilter
 					 throw std::invalid_argument("Sample radius cannot be less than 0");
 				
 				isSmoothRequested = true;
-				isSurfaceSmooth = result.count("smooth_surface") != 0;
 			}
 
 			
