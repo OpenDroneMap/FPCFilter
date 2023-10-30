@@ -68,9 +68,13 @@ namespace FPCFilter
 
 		bool isSampleRequested = false;
 		std::optional<double> radius;
-		
+
+		bool isSmoothRequested = false;
+		std::optional<double> smooth_radius;
+
 		int concurrency;
 		bool verbose;
+		
 
 		Parameters(const int argc, char** argv)
 		{
@@ -87,6 +91,7 @@ namespace FPCFilter
 				("s,std", "Standard deviation threshold", cxxopts::value<double>())
 				("m,meank", "Mean number of neighbors", cxxopts::value<int>())
 				("r,radius", "Sample radius", cxxopts::value<double>())
+				("smooth_radius", "Sample radius for smoothing", cxxopts::value<double>())
 				("c,concurrency", "Max concurrency", cxxopts::value<int>())
 				("v,verbose", "Verbose output", cxxopts::value<bool>());
 
@@ -137,6 +142,16 @@ namespace FPCFilter
 				isSampleRequested = true;
 
 			}
+
+			if (result.count("smooth_radius")) {
+				smooth_radius = result["smooth_radius"].as<double>();
+
+				if (smooth_radius < 0)
+					 throw std::invalid_argument("Sample radius cannot be less than 0");
+				
+				isSmoothRequested = true;
+			}
+
 			
 			if (result.count("concurrency")) {
 
