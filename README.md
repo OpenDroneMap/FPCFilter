@@ -65,6 +65,19 @@ property uchar views
 end_header
 ```
 
+or 
+
+```
+property float x
+property float y
+property float z
+property uchar red
+property uchar green
+property uchar blue
+property uchar views
+end_header
+```
+
 **FPCFilter** outputs a `binary little endian` PLY with the following header if the source has the normals (`nx`, `ny`, `nz`):
 
 ```
