@@ -128,16 +128,16 @@ namespace FPCFilter {
 					throw std::invalid_argument("Invalid PLY file (expected 'property float z')");
 
 				std::getline(reader, line);
-				if (line != "property uchar diffuse_red")
-					throw std::invalid_argument("Invalid PLY file (expected 'property uchar diffuse_red')");
+				if (line != "property uchar diffuse_red" && line != "property uchar red")
+					throw std::invalid_argument("Invalid PLY file (expected 'property uchar diffuse_red' or 'property uchar red')");
 
 				std::getline(reader, line);
-				if (line != "property uchar diffuse_green")
-					throw std::invalid_argument("Invalid PLY file (expected 'property uchar diffuse_green')");
+				if (line != "property uchar diffuse_green" && line != "property uchar green")
+					throw std::invalid_argument("Invalid PLY file (expected 'property uchar diffuse_green' or 'property uchar green')");
 
 				std::getline(reader, line);
-				if (line != "property uchar diffuse_blue")
-					throw std::invalid_argument("Invalid PLY file (expected 'property uchar diffuse_blue')");
+				if (line != "property uchar diffuse_blue" && line != "property uchar blue")
+					throw std::invalid_argument("Invalid PLY file (expected 'property uchar diffuse_blue' or 'property uchar blue')");
 
 				std::getline(reader, line);
 				if (line != "property uchar views")

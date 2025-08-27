@@ -31,9 +31,11 @@ namespace FPCFilter
 		std::string source;
 		bool isLoaded = false;
 		bool isVerbose = false;
+		nlohmann::json *stats;
 
 	public:
-		Pipeline(const std::string &source, std::ostream& logstream, const bool verbose) : source(source), isVerbose(verbose), log(logstream) {}
+		Pipeline(const std::string &source, std::ostream& logstream, const bool verbose, nlohmann::json *stats) : 
+			source(source), isVerbose(verbose), log(logstream), stats(stats) {}
 
 		void load()
 		{
@@ -87,7 +89,7 @@ namespace FPCFilter
 			if (!this->isLoaded)
 				this->load();
 
-			FastOutlierFilter filter(std, meank, this->log, this->isVerbose);
+			FastOutlierFilter filter(std, meank, this->log, this->isVerbose, stats);
 
 			filter.run(*this->ply);
 		}

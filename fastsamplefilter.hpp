@@ -105,12 +105,6 @@ namespace FPCFilter {
 
     private:
 
-        inline int fast_floor(double x)
-        {
-            int i = (int)x; /* truncate */
-            return i - ( i > x ); /* convert trunc to floor */
-        }
-
         bool safe_voxelize(const PlyPoint& point) {
 
             double x = point.x;
@@ -118,9 +112,9 @@ namespace FPCFilter {
             double z = point.z;
 
             // Get voxel indices for current point.
-            auto v = Voxel(fast_floor((x - originX) / cell), 
-                           fast_floor((y - originY) / cell), 
-                           fast_floor((z - originZ) / cell));
+            auto v = Voxel(static_cast<int>(std::floor((x - originX) / cell)), 
+                           static_cast<int>(std::floor((y - originY) / cell)), 
+                           static_cast<int>(std::floor((z - originZ) / cell)));
 
             // Check current voxel before any of the neighbors. We will most often have
             // points that are too close in the point's enclosing voxel, thus saving
